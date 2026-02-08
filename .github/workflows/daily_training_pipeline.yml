@@ -1,0 +1,50 @@
+name: Daily Model Training & Prediction
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  train-and-predict:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Train models
+      env:
+        HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
+        HOPSWORKS_PROJECT_NAME: ${{ secrets.HOPSWORKS_PROJECT_NAME }}
+      run: |
+        python src/models/daily_training.py
+        
+    - name: Generate predictions
+      env:
+        HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
+        HOPSWORKS_PROJECT_NAME: ${{ secrets.HOPSWORKS_PROJECT_NAME }}
+      run: |
+        python src/prediction/predictor.py
+        
+    - name: Commit predictions
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        mkdir -p data/processed 
+        git add data/processed/latest_predictions.csv data/processed/model_comparison.csv
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update predictions $(date +'%Y-%m-%d')" && git push)

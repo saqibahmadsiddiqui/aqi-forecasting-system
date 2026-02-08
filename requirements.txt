@@ -1,0 +1,37 @@
+# Core ML libraries
+numpy>=1.26,<2.0
+pandas>=2.1,<3.1
+scikit-learn>=1.4,<1.9
+xgboost>=2.0,<3.2
+lightgbm>=4.0,<5.0
+matplotlib>=3.8,<3.11
+seaborn>=0.13,<0.14
+joblib>=1.3,<1.6
+plotly>=5.16,<6
+
+# API / Web
+fastapi>=0.110,<0.130
+uvicorn>=0.23,<0.41
+streamlit>=1.30,<1.54
+python-dotenv>=1.0,<2.0
+requests>=2.31,<3.0
+
+# Hopsworks / Feature Store
+hopsworks==4.6.2
+hopsworks_aiomysql[sa]==0.2.2
+pyhumps==1.6.1
+avro==1.12.0
+fsspec>=2023.10,<2026.0
+grpcio>=1.54,<1.63
+protobuf>=4.25,<5.0
+PyMySQL>=1.1,<1.2
+retrying==1.3.4
+tzlocal==5.0.1
+mock==5.2.0
+opensearch-py>=2.4,<3.0
+
+# Utilities
+tqdm>=4.66,<5.0
+boto3>=1.34,<2.0
+furl==2.1.4
+pytz>=2023.3

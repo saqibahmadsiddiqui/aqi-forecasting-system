@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual Environment
+venv/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Data files
+data/raw/
+data/interim/
+data/processed/*.csv
+!data/processed/latest_predictions.csv
+!data/processed/model_comparison.csv
+
+# Models
+models/
+
+# Streamlit
+.streamlit/secrets.toml
