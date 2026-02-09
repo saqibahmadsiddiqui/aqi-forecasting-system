@@ -140,28 +140,44 @@ class HourlyPipeline:
         combined.loc[idx, 'month_cos'] = np.cos(2 * np.pi * dt.month / 12)
         combined.loc[idx, 'is_weekend'] = 1 if dt.weekday() >= 5 else 0
         
+    
         for lag in [1, 3, 6, 12, 24, 48]:
+            col = f'aqi_lag_{lag}h'
             if idx >= lag:
-                combined.loc[idx, f'aqi_lag_{lag}h'] = combined.loc[idx - lag, 'aqi']
-                if lag in [1, 3, 6, 24]:
-                    combined.loc[idx, f'pm2_5_lag_{lag}h'] = combined.loc[idx - lag, 'pm2_5']
-                if lag in [1, 3, 24]:
-                    combined.loc[idx, f'pm10_lag_{lag}h'] = combined.loc[idx - lag, 'pm10']
+                combined.loc[idx, col] = combined.loc[idx - lag, 'aqi']
+            else:
+                combined.loc[idx, col] = np.nan
+
+            if lag in [1, 3, 6, 24]:
+                col_pm25 = f'pm2_5_lag_{lag}h'
+                if idx >= lag:
+                    combined.loc[idx, col_pm25] = combined.loc[idx - lag, 'pm2_5']
+                else:
+                    combined.loc[idx, col_pm25] = np.nan
+
+            if lag in [1, 3, 24]:
+                col_pm10 = f'pm10_lag_{lag}h'
+                if idx >= lag:
+                    combined.loc[idx, col_pm10] = combined.loc[idx - lag, 'pm10']
+                else:
+                    combined.loc[idx, col_pm10] = np.nan
+        
         
         for w in [3, 6, 12, 24]:
+            col = f'aqi_rolling_mean_{w}h'
             if idx >= w - 1:
-                combined.loc[idx, f'aqi_rolling_mean_{w}h'] = combined.loc[max(0, idx-w+1):idx+1, 'aqi'].mean()
-        
-        if idx >= 5:
-            combined.loc[idx, 'aqi_rolling_std_6h'] = combined.loc[idx-5:idx+1, 'aqi'].std()
-            combined.loc[idx, 'pm2_5_rolling_mean_6h'] = combined.loc[idx-5:idx+1, 'pm2_5'].mean()
-        
-        if idx >= 23:
-            combined.loc[idx, 'aqi_rolling_std_24h'] = combined.loc[idx-23:idx+1, 'aqi'].std()
-            combined.loc[idx, 'aqi_rolling_min_24h'] = combined.loc[idx-23:idx+1, 'aqi'].min()
-            combined.loc[idx, 'aqi_rolling_max_24h'] = combined.loc[idx-23:idx+1, 'aqi'].max()
-            combined.loc[idx, 'pm2_5_rolling_mean_24h'] = combined.loc[idx-23:idx+1, 'pm2_5'].mean()
-            combined.loc[idx, 'aqi_change_24h'] = combined.loc[idx, 'aqi'] - combined.loc[idx-24, 'aqi']
+                combined.loc[idx, col] = combined.loc[max(0, idx-w+1):idx+1, 'aqi'].mean()
+            else:
+                combined.loc[idx, col] = np.nan
+
+        combined.loc[idx, 'aqi_rolling_std_6h'] = combined.loc[idx-5:idx+1, 'aqi'].std() if idx >= 5 else np.nan
+        combined.loc[idx, 'pm2_5_rolling_mean_6h'] = combined.loc[idx-5:idx+1, 'pm2_5'].mean() if idx >= 5 else np.nan
+
+        combined.loc[idx, 'aqi_rolling_std_24h'] = combined.loc[idx-23:idx+1, 'aqi'].std() if idx >= 23 else np.nan
+        combined.loc[idx, 'aqi_rolling_min_24h'] = combined.loc[idx-23:idx+1, 'aqi'].min() if idx >= 23 else np.nan
+        combined.loc[idx, 'aqi_rolling_max_24h'] = combined.loc[idx-23:idx+1, 'aqi'].max() if idx >= 23 else np.nan
+        combined.loc[idx, 'pm2_5_rolling_mean_24h'] = combined.loc[idx-23:idx+1, 'pm2_5'].mean() if idx >= 23 else np.nan
+        combined.loc[idx, 'aqi_change_24h'] = (combined.loc[idx, 'aqi'] - combined.loc[idx-24, 'aqi']) if idx >= 24 else np.nan
         
         combined.loc[idx, 'pm2_5_x_wind_speed'] = combined.loc[idx, 'pm2_5'] * combined.loc[idx, 'wind_speed']
         
