@@ -27,6 +27,6 @@ data/processed/*.csv
 
 # Models
 models/
-
+!src/models/
 # Streamlit
 .streamlit/secrets.toml
