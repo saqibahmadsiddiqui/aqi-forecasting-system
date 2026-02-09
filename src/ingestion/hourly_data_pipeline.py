@@ -178,9 +178,9 @@ class HourlyPipeline:
         
         print("Fetching recent context from Online Store...")
         hist = self.fg.read(online=True)
-        hist['datetime'] = pd.to_datetime(hist['datetime'])
+        hist['datetime'] = pd.to_datetime(hist['datetime']).dt.tz_localize('UTC').dt.tz_convert(self.pkt)
         hist = hist.sort_values('datetime')
-        
+
         cutoff = datetime.now(self.pkt) - timedelta(hours=50)
         hist_recent = hist[hist['datetime'] >= cutoff].copy()
         
