@@ -30,8 +30,8 @@ class HourlyPipeline:
     def connect_hopsworks(self):
         self.project = hopsworks.login(
             host=HOPSWORKS_HOST,
-            api_key_value=self.hopsworks_key,
-            project=self.project_name
+            api_key_value=HOPSWORKS_API_KEY,
+            project=HOPSWORKS_PROJECT_NAME
         )
         self.fs = self.project.get_feature_store()
         self.fg = self.fs.get_feature_group(name=FEATURE_GROUP_NAME, version=FEATURE_GROUP_VERSION)
@@ -40,8 +40,8 @@ class HourlyPipeline:
     def fetch_current(self):
         print("\nFetching current data...")
         
-        pollution_url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={self.lat}&lon={self.lon}&appid={self.api_key}"
-        weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={self.lat}&lon={self.lon}&appid={self.api_key}&units=metric"
+        pollution_url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={self.lat}&lon={self.lon}&appid={OPENWEATHER_API_KEY}"
+        weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={self.lat}&lon={self.lon}&appid={OPENWEATHER_API_KEY}&units=metric"
         
         p = requests.get(pollution_url).json()
         w = requests.get(weather_url).json()
