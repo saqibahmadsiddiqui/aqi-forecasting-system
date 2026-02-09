@@ -142,7 +142,7 @@ class HourlyPipeline:
         print("\nUploading...")
         
         data = data.copy()
-        data['datetime'] = pd.to_datetime(data['datetime']).dt.tz_localize(None)
+        data['datetime'] = pd.to_datetime(data['datetime'], utc=True)
         data = data.fillna(0)
         data['timestamp'] = (data['datetime'].astype('int64') // 10**6)
         data['is_weekend'] = data['is_weekend'].astype('int64')
