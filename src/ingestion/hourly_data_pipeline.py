@@ -141,24 +141,28 @@ class HourlyPipeline:
     def upload(self, data):
         print("\nUploading...")
         
+        data = data.copy()
+        data['datetime'] = pd.to_datetime(data['datetime']).dt.tz_localize(None)
         data = data.fillna(0)
-        data['timestamp'] = data['datetime'].values.astype('int64') // 10**6
+        data['timestamp'] = (data['datetime'].astype('int64') // 10**6)
         data['is_weekend'] = data['is_weekend'].astype('int64')
         data['aqi'] = data['aqi'].astype('int64')
-        
+
         try:
             self.fg.insert(data, write_options={"wait_for_job": False})
-            print("Uploaded")
+            print("Uploaded successfully")
             time.sleep(2)
+
         except Exception as e:
             print(f"Upload failed: {e}")
-            print("Retrying...")
+            print("Retrying once...")
             time.sleep(3)
             try:
                 self.fg.insert(data, write_options={"wait_for_job": False})
-                print("Uploaded (retry)")
+                print("Uploaded successfully (retry)")
             except Exception as e2:
                 print(f"Upload failed again: {e2}")
+
     
     def run(self):
         print("\n" + "="*60)
