@@ -14,10 +14,11 @@ project = hopsworks.login(
 fs = project.get_feature_store()
 fg = fs.get_feature_group(name="aqi_multan_features", version=1)
 
-df = fg.read()
+df = fg.read(online=True)
+
 df['datetime'] = pd.to_datetime(df['datetime'])
 
-print(f"\nTotal records: {len(df)}")
+print(f"\nTotal records (online store): {len(df)}")
 print(f"Date range: {df['datetime'].min()} to {df['datetime'].max()}")
-print(f"\nLatest 10 records:")
-print(df[['datetime', 'aqi', 'pm2_5', 'temp']].tail(10))
+print("\nLatest 10 records:")
+print(df[['datetime', 'aqi', 'pm2_5', 'temp']].sort_values('datetime').tail(10))
