@@ -8,11 +8,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import hopsworks
 import joblib
 import tempfile
-import shutil
 from pathlib import Path
 import sys
-import os
-from dotenv import load_dotenv
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 from src.config.config import *
@@ -21,8 +18,8 @@ load_dotenv()
 
 class DailyTraining:
     def __init__(self):
-        self.hopsworks_key = os.getenv("HOPSWORKS_API_KEY")
-        self.project_name = os.getenv("HOPSWORKS_PROJECT_NAME")
+        self.hopsworks_key = HOPSWORKS_API_KEY
+        self.project_name = HOPSWORKS_PROJECT_NAME
         self.project = None
         self.fs = None
         self.mr = None
