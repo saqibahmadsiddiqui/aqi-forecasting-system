@@ -484,6 +484,28 @@ st.markdown("""
         color: #ffffff !important;
         opacity: 1 !important;
     }
+    
+    /* sidebar close button */
+    button[title="Close sidebar"] {
+        opacity: 1 !important;
+    }
+
+    button[title="Close sidebar"] svg {
+        fill: #ffffff !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+    }
+
+    /* Also keep the open button visible */
+    button[title="Open sidebar"] {
+        opacity: 1 !important;
+    }
+
+    button[title="Open sidebar"] svg {
+        fill: #ffffff !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -875,7 +897,7 @@ def show_about():
             <div style="color: #00d4ff; font-weight: bold;">System Information</div>
             <ul style="color: #bbb; margin-top: 1rem;">
                 <li>Data Range: Oct 2025 - Present</li>
-                <li>Update Frequency: Hourly</li>
+                <li>Update Frequency: Daily</li>
                 <li>Feature Storage: Hopsworks</li>
                 <li>Update Frequency: Real-time</li>
             </ul>
