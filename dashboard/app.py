@@ -485,26 +485,27 @@ st.markdown("""
         opacity: 1 !important;
     }
     
-    /* sidebar close button */
-    button[title="Close sidebar"] {
+    /* Header toolbar container */
+    header[data-testid="stHeader"] div[data-testid="stToolbar"] button {
         opacity: 1 !important;
+        visibility: visible !important;
     }
 
-    button[title="Close sidebar"] svg {
+    /* The SVG icon inside the button */
+    header[data-testid="stHeader"] div[data-testid="stToolbar"] button svg {
         fill: #ffffff !important;
         color: #ffffff !important;
         opacity: 1 !important;
     }
 
-    /* Also keep the open button visible */
-    button[title="Open sidebar"] {
+    /* Remove Streamlit fade effect */
+    header[data-testid="stHeader"] div[data-testid="stToolbar"] {
         opacity: 1 !important;
     }
 
-    button[title="Open sidebar"] svg {
-        fill: #ffffff !important;
-        color: #ffffff !important;
-        opacity: 1 !important;
+    /* Optional: glow on hover */
+    header[data-testid="stHeader"] div[data-testid="stToolbar"] button:hover svg {
+        fill: #00d4ff !important;
     }
 </style>
 """, unsafe_allow_html=True)
