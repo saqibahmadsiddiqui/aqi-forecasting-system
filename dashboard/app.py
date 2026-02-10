@@ -459,24 +459,9 @@ st.markdown("""
     }
     
     /* Make the main container leave space for footer */
-    [data-testid="stAppViewContainer"] {
-        padding-bottom: 120px;  /* enough space so footer won't overlap */
-    }
-
-    /* Sticky footer */
-    .footer {
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        text-align: center;
-        padding: 1rem 0;
-        color: #00d4ff;
-        border-top: 2px solid rgba(0, 212, 255, 0.2);
-        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
-        z-index: 100;
-        font-weight: 500;
-        font-size: 1rem;
-    }
+    # [data-testid="stAppViewContainer"] {
+    #     padding-bottom: 120px;  /* enough space so footer won't overlap */
+    # }
 </style>
 """, unsafe_allow_html=True)
 
