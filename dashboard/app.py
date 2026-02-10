@@ -1,220 +1,10 @@
-# import streamlit as st
-# import pandas as pd
-# import plotly.graph_objects as go
-# import plotly.express as px
-# from datetime import datetime
-# import pytz
-# import sys
-# from pathlib import Path
-# import os
-# from dotenv import load_dotenv
-
-# load_dotenv()
-
-# sys.path.append(str(Path(__file__).parent.parent))
-# from src.prediction.predictor import AQIPredictor
-# from src.config.config import *
-
-# st.set_page_config(
-#     page_title="AQI Forecast - Multan",
-#     page_icon="🌫️",
-#     layout="wide"
-# )
-
-# st.markdown("""
-# <style>
-#     .main-header {font-size: 3rem; font-weight: bold; color: #1f77b4; text-align: center; margin-bottom: 2rem;}
-#     .warning-box {background-color: #ff4444; color: white; padding: 1rem; border-radius: 10px; margin: 1rem 0; font-weight: bold;}
-# </style>
-# """, unsafe_allow_html=True)
-
-# AQI_COLORS = {
-#     'Good': '#00e400',
-#     'Fair': '#ffff00',
-#     'Moderate': '#ff7e00',
-#     'Poor': '#ff0000',
-#     'Very Poor': '#8f3f97'
-# }
-
-# @st.cache_data(ttl=3600)
-# def load_predictions():
-#     predictions_path = PROCESSED_DATA_DIR / 'latest_predictions.csv'
-#     comparison_path = PROCESSED_DATA_DIR / 'model_comparison.csv'
-    
-#     if predictions_path.exists():
-#         return pd.read_csv(predictions_path).fillna(""), pd.read_csv(comparison_path).fillna("")
-#     else:
-#         st.info("Generating predictions...")
-#         predictor = AQIPredictor()
-#         predictor.connect_hopsworks()
-#         predictor.load_all_models()
-#         predictions = predictor.predict_next_3_days()
-#         comparison = predictor.get_model_comparison()
-        
-#         pred_df = pd.DataFrame(predictions)
-#         comp_df = pd.DataFrame(comparison)
-        
-#         pred_df.to_csv(predictions_path, index=False)
-#         comp_df.to_csv(comparison_path, index=False)
-        
-#         return pred_df, comp_df
-
-# def main():
-#     st.markdown('<div class="main-header">🌫️ AQI Forecast Dashboard</div>', unsafe_allow_html=True)
-#     st.markdown('<div style="text-align:center; font-size:1.5rem; color:#555; margin-bottom:2rem;">3-Day Air Quality Predictions for Multan, Pakistan</div>', unsafe_allow_html=True)
-    
-#     with st.spinner("Loading predictions..."):
-#         predictions_df, comparison_df = load_predictions()
-    
-#     pkt = pytz.timezone(TIMEZONE)
-#     current_time = datetime.now(pkt)
-#     st.markdown(f"**Last Updated:** {current_time.strftime('%A, %B %d, %Y at %I:%M %p PKT')}")
-    
-#     st.sidebar.title("📊 Navigation")
-#     page = st.sidebar.radio("Go to", ["3-Day Forecast", "Model Comparison", "About"])
-    
-#     if page == "3-Day Forecast":
-#         show_forecast(predictions_df, comparison_df)
-#     elif page == "Model Comparison":
-#         show_model_comparison(comparison_df)
-#     else:
-#         show_about()
-
-# def show_forecast(predictions_df, comparison_df):
-#     st.markdown("---")
-#     st.header("📅 Next 3 Days AQI Forecast")
-    
-#     best_model = comparison_df.loc[comparison_df['r2_score'].idxmax()]
-#     st.info(f"**Predictions powered by:** {best_model['model']} (R² Score: {best_model['r2_score']:.3f})")
-    
-#     # Check for warnings
-#     warnings = predictions_df[predictions_df['warning'].notna()]
-#     if len(warnings) > 0:
-#         st.markdown('<div class="warning-box">⚠️ AIR QUALITY WARNINGS</div>', unsafe_allow_html=True)
-#         for _, row in warnings.iterrows():
-#             st.error(f"**{row['day_name']}, {row['date']}**: {row['warning']}")
-    
-#     cols = st.columns(3)
-    
-#     for idx, row in predictions_df.iterrows():
-#         with cols[idx]:
-#             color = AQI_COLORS.get(row['category'], '#gray')
-            
-#             st.markdown(f"### {row['day_name']}")
-#             st.markdown(f"**{row['date']}**")
-            
-#             st.markdown(f"""
-#             <div style='text-align: center; padding: 1rem; margin: 1rem 0;
-#                         background-color: {color}; border-radius: 10px;'>
-#                 <h1 style='color: white; margin: 0;'>{row['average_aqi']}</h1>
-#                 <h3 style='color: white; margin: 0;'>{row['category']}</h3>
-#             </div>
-#             """, unsafe_allow_html=True)
-            
-#             st.markdown(f"**Range:** {row['min_aqi']} - {row['max_aqi']}")
-            
-#             if pd.notna(row['warning']):
-#                 st.warning(row['warning'])
-    
-#     st.markdown("---")
-#     st.subheader("📈 AQI Trend")
-    
-#     fig = go.Figure()
-#     fig.add_trace(go.Scatter(
-#         x=predictions_df['date'],
-#         y=predictions_df['average_aqi'],
-#         mode='lines+markers',
-#         name='Average AQI',
-#         line=dict(color='#1f77b4', width=3),
-#         marker=dict(size=10)
-#     ))
-    
-#     fig.update_layout(
-#         title="3-Day AQI Forecast",
-#         xaxis_title="Date",
-#         yaxis_title="AQI",
-#         hovermode='x unified',
-#         height=400
-#     )
-    
-#     st.plotly_chart(fig, use_container_width=True)
-
-# def show_model_comparison(comparison_df):
-#     st.markdown("---")
-#     st.header("🤖 Model Performance Comparison")
-    
-#     best_model = comparison_df[comparison_df['is_best'] == True].iloc[0]
-    
-#     st.markdown("---")
-#     st.subheader("🏆 Current Best Model")
-    
-#     col1, col2, col3, col4 = st.columns(4)
-#     with col1:
-#         st.metric("Model", best_model['model'])
-#     with col2:
-#         st.metric("MAE", f"{best_model['mae']:.3f}")
-#     with col3:
-#         st.metric("RMSE", f"{best_model['rmse']:.3f}")
-#     with col4:
-#         st.metric("R² Score", f"{best_model['r2_score']:.3f}")
-    
-#     st.markdown("---")
-#     st.subheader("📊 All Models")
-    
-#     display_df = comparison_df.copy()
-#     display_df['Status'] = display_df['is_best'].apply(lambda x: '🏆 SELECTED' if x else '')
-    
-#     st.dataframe(
-#         display_df[['model', 'mae', 'rmse', 'r2_score', 'Status']],
-#         use_container_width=True,
-#         hide_index=True
-#     )
-
-# def show_about():
-#     st.markdown("---")
-#     st.header("ℹ️ About")
-    
-#     st.markdown("""
-#     ### 🎯 Project Overview
-    
-#     3-day Air Quality Index (AQI) forecasting system for Multan, Pakistan using ML models.
-    
-#     ### 🔍 How It Works
-    
-#     1. **Hourly**: Collects air quality data from OpenWeather API
-#     2. **Daily**: Trains 3 models on all historical data
-#     3. **Prediction**: Selects best model and predicts next 3 days
-#     4. **Warnings**: Alerts for Poor and Hazardous air quality
-    
-#     ### 📊 Models
-    
-#     - Random Forest
-#     - XGBoost
-#     - LightGBM
-    
-#     ### 🏙️ Location
-    
-#     **Multan, Pakistan**
-#     - Latitude: 30.1979793
-#     - Longitude: 71.4724978
-    
-#     ### 📈 Data
-    
-#     Historical data from October 2025 to present, updated hourly.
-#     """)
-
-# if __name__ == "__main__":
-#     main()
-
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 from datetime import datetime
 import pytz
 import sys
 from pathlib import Path
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -230,7 +20,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ==================== CUSTOM STYLING ====================
+# ==================== CUSTOM CSS ====================
 st.markdown("""
 <style>
     * {
@@ -239,213 +29,403 @@ st.markdown("""
     }
     
     /* Main background */
-    .main {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
     }
     
     [data-testid="stMain"] {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+    }
+    
+    /* Sidebar styling with animation */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%);
+        animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        padding-top: 1rem;
+    }
+    
+    /* Text colors for sidebar */
+    [data-testid="stSidebar"] .css-1dp5vir {
+        color: #ffffff !important;
     }
     
     /* Header styling */
-    .main-header {
+    .main-title {
         font-size: 3.5rem;
         font-weight: 900;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        text-align: center;
+        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-align: center;
         margin-bottom: 0.5rem;
         letter-spacing: -1px;
+        animation: fadeInDown 0.8s ease-out;
     }
     
-    .subtitle {
+    .sub-title {
         text-align: center;
-        font-size: 1.3rem;
-        color: #555;
+        font-size: 1.4rem;
+        color: #80d4ff;
         margin-bottom: 2rem;
         font-weight: 500;
+        animation: fadeInUp 0.8s ease-out 0.2s backwards;
     }
     
-    /* Card styling */
+    .tagline {
+        text-align: center;
+        font-size: 1rem;
+        color: #555;
+        margin-bottom: 2rem;
+        font-weight: 400;
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* DateTime display */
+    .datetime-display {
+        text-align: center;
+        font-size: 1.1rem;
+        color: #00d4ff;
+        margin-bottom: 2rem;
+        padding: 1rem;
+        border: 2px solid #00d4ff;
+        border-radius: 12px;
+        background: rgba(0, 212, 255, 0.05);
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+        animation: fadeInUp 0.8s ease-out 0.4s backwards;
+    }
+    
+    /* Forecast card styling */
     .forecast-card {
-        background: white;
+        background: linear-gradient(135deg, #1a3a4a 0%, #0f2a3a 100%);
+        border: 2px solid #00d4ff;
         border-radius: 20px;
         padding: 2rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        box-shadow: 0 15px 50px rgba(0, 212, 255, 0.15);
         transition: all 0.3s ease;
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        animation: slideInCard 0.6s ease-out backwards;
+    }
+    
+    .forecast-card:nth-child(1) {
+        animation-delay: 0.2s;
+    }
+    
+    .forecast-card:nth-child(2) {
+        animation-delay: 0.4s;
+    }
+    
+    .forecast-card:nth-child(3) {
+        animation-delay: 0.6s;
+    }
+    
+    @keyframes slideInCard {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     .forecast-card:hover {
         transform: translateY(-10px);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 25px 80px rgba(0, 212, 255, 0.25);
+        border-color: #00ffff;
     }
     
-    /* AQI Circle */
-    .aqi-circle {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 140px;
-        height: 140px;
-        border-radius: 50%;
-        margin: 1.5rem auto;
-        font-size: 3rem;
+    .day-name {
+        font-size: 1.8rem;
         font-weight: bold;
-        color: white;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        animation: pulse 2s infinite;
+        color: #00d4ff;
+        margin-bottom: 0.5rem;
     }
     
-    @keyframes pulse {
-        0%, 100% { box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); }
-        50% { box-shadow: 0 8px 35px rgba(0, 0, 0, 0.25); }
+    .date-text {
+        color: #888;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
     }
     
-    /* Warning box */
-    .warning-box {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
-        color: white;
-        padding: 1.5rem;
-        border-radius: 15px;
+    .aqi-value {
+        font-size: 4.5rem;
+        font-weight: 900;
+        color: #00ffff;
         margin: 1rem 0;
+        text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+    
+    .aqi-category {
+        font-size: 1.5rem;
         font-weight: bold;
-        border-left: 5px solid #ff3838;
-        box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+        color: #00d4ff;
+        margin-bottom: 1rem;
     }
     
-    /* Info box */
-    .info-box {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 12px;
-        margin: 1rem 0;
-        font-weight: 500;
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    .aqi-range {
+        color: #aaa;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
     }
     
     /* Status badge */
-    .status-badge {
-        display: inline-block;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.9rem;
+    .status-good {
+        background: linear-gradient(135deg, rgba(0, 255, 136, 0.2) 0%, rgba(0, 200, 100, 0.2) 100%);
+        border: 2px solid #00ff88;
+        color: #00ff88;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
         font-weight: bold;
-        margin: 0.5rem 0;
+        font-size: 1rem;
     }
     
-    .status-badge.best {
-        background: linear-gradient(135deg, #ffd89b 0%, #ff9d3c 100%);
-        color: white;
+    .status-warning {
+        background: linear-gradient(135deg, rgba(255, 165, 0, 0.2) 0%, rgba(255, 100, 0, 0.2) 100%);
+        border: 2px solid #ff9500;
+        color: #ff9500;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+    
+    .status-critical {
+        background: linear-gradient(135deg, rgba(255, 50, 50, 0.2) 0%, rgba(200, 0, 0, 0.2) 100%);
+        border: 2px solid #ff3232;
+        color: #ff3232;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+    
+    /* Section header */
+    .section-header {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #00d4ff;
+        margin: 2rem 0 1.5rem 0;
+        border-bottom: 3px solid #00d4ff;
+        padding-bottom: 1rem;
     }
     
     /* Divider */
     .divider {
         height: 2px;
-        background: linear-gradient(90deg, transparent, #667eea, transparent);
-        margin: 2rem 0;
+        background: linear-gradient(90deg, transparent, #00d4ff, #00ffff, transparent);
+        margin: 2.5rem 0;
+        border: none;
     }
     
-    /* Section header */
-    .section-header {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #333;
-        margin: 2rem 0 1.5rem 0;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    /* Metric card */
-    .metric-card {
-        background: white;
-        padding: 1.5rem;
+    /* Model comparison card */
+    .model-card {
+        background: linear-gradient(135deg, #1a3a4a 0%, #0f2a3a 100%);
+        border: 2px solid #00d4ff;
         border-radius: 15px;
-        text-align: center;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(102, 126, 234, 0.1);
-    }
-    
-    /* Sidebar styling */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    [data-testid="stSidebar"] > div > div > div {
-        color: white !important;
-    }
-    
-    /* Last updated */
-    .last-updated {
-        text-align: center;
-        color: #999;
-        font-size: 0.95rem;
-        margin: 1rem 0;
-        font-weight: 500;
-    }
-    
-    /* Day name styling */
-    .day-name {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #333;
-        margin: 1rem 0 0.5rem 0;
-    }
-    
-    .date-text {
-        color: #999;
-        font-size: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .aqi-range {
-        color: #666;
-        font-size: 1.1rem;
-        margin: 1rem 0;
-        font-weight: 600;
-    }
-    
-    /* About section */
-    .about-box {
-        background: white;
         padding: 2rem;
-        border-radius: 15px;
-        margin: 1rem 0;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        border-left: 4px solid #667eea;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 212, 255, 0.15);
+        transition: all 0.3s ease;
     }
     
-    .about-box h3 {
-        color: #667eea;
-        margin-top: 1.5rem;
+    .model-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 50px rgba(0, 212, 255, 0.25);
+        border-color: #00ffff;
+    }
+    
+    .model-label {
+        color: #888;
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
         margin-bottom: 0.5rem;
     }
     
-    .about-box h3:first-child {
-        margin-top: 0;
+    .model-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #00d4ff;
+    }
+    
+    /* About section */
+    .about-section {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(0, 100, 150, 0.05) 100%);
+        border: 2px solid rgba(0, 212, 255, 0.3);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        color: #ddd;
+    }
+    
+    .about-title {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #00d4ff;
+        margin-bottom: 1rem;
+    }
+    
+    .about-text {
+        line-height: 1.8;
+        color: #bbb;
+    }
+    
+    .model-info {
+        background: linear-gradient(135deg, #1a3a4a 0%, #0f2a3a 100%);
+        border-left: 4px solid #00d4ff;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        color: #ddd;
+    }
+    
+    .model-name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #00d4ff;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Footer */
+    .footer {
+        text-align: center;
+        margin-top: 3rem;
+        padding: 2rem;
+        color: #00d4ff;
+        font-size: 1rem;
+        border-top: 2px solid rgba(0, 212, 255, 0.2);
+        font-weight: 500;
+    }
+    
+    /* Chart styling */
+    .chart-container {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(0, 100, 150, 0.05) 100%);
+        border: 2px solid rgba(0, 212, 255, 0.2);
+        border-radius: 15px;
+        padding: 2rem;
+        margin: 2rem 0;
+    }
+    
+    /* Metric boxes */
+    .metric-box {
+        background: linear-gradient(135deg, #1a3a4a 0%, #0f2a3a 100%);
+        border: 2px solid #00d4ff;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        color: #00d4ff;
+        font-weight: bold;
+    }
+    
+    .metric-label {
+        color: #888;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-value {
+        font-size: 2.2rem;
+        color: #00ffff;
+    }
+    
+    /* Sidebar menu title */
+    .sidebar-menu-title {
+        color: #00d4ff;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+    }
+    
+    /* Navigation radio buttons */
+    [data-testid="stSidebar"] [role="radiogroup"] {
+        gap: 1rem;
+    }
+    
+    [data-testid="stSidebar"] [role="radio"] {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 100, 150, 0.1) 100%);
+        border: 2px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    [data-testid="stSidebar"] [role="radio"]:hover {
+        border-color: #00d4ff;
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 100, 150, 0.2) 100%);
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ==================== COLOR MAPPING ====================
-AQI_COLORS = {
-    'Good': '#00e400',
-    'Fair': '#ffff00',
-    'Moderate': '#ff7e00',
-    'Poor': '#ff0000',
-    'Very Poor': '#8f3f97'
-}
-
-AQI_COLOR_HEX = {
-    'Good': '#00E400',
-    'Fair': '#FFFF00',
-    'Moderate': '#FF7E00',
-    'Poor': '#FF0000',
-    'Very Poor': '#8F3F97'
+AQI_CATEGORIES = {
+    'Good': {
+        'color': '#00ff88',
+        'bg': 'rgba(0, 255, 136, 0.15)',
+        'border': '#00ff88'
+    },
+    'Fair': {
+        'color': '#ffff00',
+        'bg': 'rgba(255, 255, 0, 0.15)',
+        'border': '#ffff00'
+    },
+    'Moderate': {
+        'color': '#ff9500',
+        'bg': 'rgba(255, 149, 0, 0.15)',
+        'border': '#ff9500'
+    },
+    'Poor': {
+        'color': '#ff3232',
+        'bg': 'rgba(255, 50, 50, 0.15)',
+        'border': '#ff3232'
+    },
+    'Very Poor': {
+        'color': '#ff0080',
+        'bg': 'rgba(255, 0, 128, 0.15)',
+        'border': '#ff0080'
+    }
 }
 
 # ==================== CACHE & DATA LOADING ====================
@@ -457,7 +437,6 @@ def load_predictions():
     if predictions_path.exists():
         return pd.read_csv(predictions_path).fillna(""), pd.read_csv(comparison_path).fillna("")
     else:
-        st.info("Generating predictions...")
         predictor = AQIPredictor()
         predictor.connect_hopsworks()
         predictor.load_all_models()
@@ -473,365 +452,396 @@ def load_predictions():
         return pred_df, comp_df
 
 # ==================== HELPER FUNCTIONS ====================
-def get_aqi_emoji(category):
-    """Return emoji based on AQI category"""
-    emojis = {
-        'Good': '😊',
-        'Fair': '🙂',
-        'Moderate': '😐',
-        'Poor': '😷',
-        'Very Poor': '😵'
-    }
-    return emojis.get(category, '❓')
-
-def get_aqi_gradient(category):
-    """Return gradient CSS for AQI circles"""
-    gradients = {
-        'Good': 'linear-gradient(135deg, #00e400 0%, #00c800 100%)',
-        'Fair': 'linear-gradient(135deg, #ffff00 0%, #ffcc00 100%)',
-        'Moderate': 'linear-gradient(135deg, #ff7e00 0%, #ff6600 100%)',
-        'Poor': 'linear-gradient(135deg, #ff0000 0%, #cc0000 100%)',
-        'Very Poor': 'linear-gradient(135deg, #8f3f97 0%, #6d2d7a 100%)'
-    }
-    return gradients.get(category, 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)')
+def get_status_class(category):
+    """Get status badge class based on category"""
+    if category == 'Good':
+        return 'status-good'
+    elif category in ['Fair']:
+        return 'status-warning'
+    else:
+        return 'status-critical'
 
 def create_trend_chart(predictions_df):
-    """Create an interactive trend chart"""
+    """Create an interactive trend chart with proper AQI scaling (0-5)"""
     fig = go.Figure()
     
+    # Add filled area
     fig.add_trace(go.Scatter(
         x=predictions_df['date'],
         y=predictions_df['average_aqi'],
-        mode='lines+markers',
-        name='AQI',
-        line=dict(
-            color='#667eea',
-            width=4,
-            shape='spline'
-        ),
-        marker=dict(
-            size=12,
-            color='#667eea',
-            symbol='circle',
-            line=dict(color='white', width=2)
-        ),
         fill='tozeroy',
-        fillcolor='rgba(102, 126, 234, 0.1)',
-        hovertemplate='<b>%{x}</b><br>AQI: %{y:.0f}<extra></extra>'
+        fillcolor='rgba(0, 212, 255, 0.2)',
+        line=dict(color='#00ffff', width=4),
+        mode='lines',
+        hovertemplate='<b>%{x}</b><br>AQI: %{y:.2f}<extra></extra>'
+    ))
+    
+    # Add markers
+    fig.add_trace(go.Scatter(
+        x=predictions_df['date'],
+        y=predictions_df['average_aqi'],
+        mode='markers',
+        marker=dict(
+            size=14,
+            color='#00d4ff',
+            symbol='circle',
+            line=dict(color='#00ffff', width=3)
+        ),
+        hovertemplate='<b>%{x}</b><br>AQI: %{y:.2f}<extra></extra>',
+        showlegend=False
     ))
     
     fig.update_layout(
-        title={
-            'text': '📈 3-Day AQI Forecast Trend',
-            'font': {'size': 20, 'color': '#333', 'family': 'Arial Black'}
-        },
-        xaxis_title='Date',
-        yaxis_title='AQI Value',
+        title=dict(
+            text='Air Quality Trend',
+            font=dict(size=18, color='#00d4ff', family='Arial Black')
+        ),
+        xaxis=dict(
+            title='Date',
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='rgba(0, 212, 255, 0.1)',
+            color='#888'
+        ),
+        yaxis=dict(
+            title='AQI Index',
+            range=[0, 5],
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='rgba(0, 212, 255, 0.1)',
+            color='#888'
+        ),
         hovermode='x unified',
-        height=400,
-        template='plotly_white',
-        plot_bgcolor='rgba(245, 247, 250, 0.5)',
-        paper_bgcolor='white',
-        font=dict(family='Arial, sans-serif', size=12),
-        margin=dict(l=50, r=50, t=80, b=50)
+        height=450,
+        template='plotly_dark',
+        paper_bgcolor='rgba(0, 0, 0, 0)',
+        plot_bgcolor='rgba(15, 42, 58, 0.5)',
+        font=dict(family='Arial', size=12, color='#ddd'),
+        margin=dict(l=50, r=50, t=80, b=50),
+        showlegend=False
     )
     
     return fig
 
 def create_model_comparison_chart(comparison_df):
-    """Create model comparison visualization"""
+    """Create an appealing model comparison chart"""
     fig = go.Figure()
+    
+    colors = ['#00ffff' if x else '#00d4ff' for x in comparison_df['is_best']]
     
     fig.add_trace(go.Bar(
         x=comparison_df['model'],
         y=comparison_df['r2_score'],
-        name='R² Score',
         marker=dict(
-            color=comparison_df['r2_score'],
-            colorscale='Viridis',
-            showscale=False,
+            color=colors,
             line=dict(color='white', width=2)
         ),
-        text=[f"{v:.3f}" for v in comparison_df['r2_score']],
+        text=[f"{v:.4f}" for v in comparison_df['r2_score']],
         textposition='outside',
-        hovertemplate='<b>%{x}</b><br>R² Score: %{y:.3f}<extra></extra>'
+        hovertemplate='<b>%{x}</b><br>R² Score: %{y:.4f}<extra></extra>'
     ))
     
     fig.update_layout(
-        title={
-            'text': '🤖 Model Performance (R² Score)',
-            'font': {'size': 20, 'color': '#333', 'family': 'Arial Black'}
-        },
-        xaxis_title='Model',
-        yaxis_title='R² Score',
-        height=400,
-        template='plotly_white',
-        plot_bgcolor='rgba(245, 247, 250, 0.5)',
-        paper_bgcolor='white',
-        font=dict(family='Arial, sans-serif', size=12),
-        showlegend=False,
-        margin=dict(l=50, r=50, t=80, b=50)
+        title=dict(
+            text='Model Performance Comparison',
+            font=dict(size=18, color='#00d4ff', family='Arial Black')
+        ),
+        xaxis=dict(title='Model', color='#888'),
+        yaxis=dict(
+            title='R² Score',
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='rgba(0, 212, 255, 0.1)',
+            color='#888'
+        ),
+        height=450,
+        template='plotly_dark',
+        paper_bgcolor='rgba(0, 0, 0, 0)',
+        plot_bgcolor='rgba(15, 42, 58, 0.5)',
+        font=dict(family='Arial', size=12, color='#ddd'),
+        margin=dict(l=50, r=50, t=80, b=50),
+        showlegend=False
     )
     
     return fig
 
 # ==================== PAGE FUNCTIONS ====================
 def show_forecast(predictions_df, comparison_df):
-    """Display 3-day forecast with enhanced styling"""
+    """Display 3-day forecast page"""
     
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-header">📅 Next 3 Days Forecast</div>', unsafe_allow_html=True)
+    # Section header
+    st.markdown('<div class="section-header">Next 3 Days Forecast</div>', unsafe_allow_html=True)
     
     best_model = comparison_df.loc[comparison_df['r2_score'].idxmax()]
-    st.markdown(f'''
-    <div class="info-box">
-        ✨ <b>Predictions powered by:</b> {best_model['model']} 
-        <span style="float: right;">R² Score: <b>{best_model['r2_score']:.3f}</b></span>
-    </div>
-    ''', unsafe_allow_html=True)
+    st.info(f"Predictions powered by **{best_model['model']}** (R² Score: {best_model['r2_score']:.4f})")
     
-    # Check for warnings
-    warnings = predictions_df[predictions_df['warning'].notna()]
-    if len(warnings) > 0:
-        st.markdown('<div class="warning-box">⚠️ AIR QUALITY WARNINGS</div>', unsafe_allow_html=True)
-        for _, row in warnings.iterrows():
-            st.error(f"🚨 **{row['day_name']}, {row['date']}**: {row['warning']}")
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     
     # Display 3-day forecast cards
     cols = st.columns(3, gap="large")
     
     for idx, (_, row) in enumerate(predictions_df.iterrows()):
+        category = row['category']
+        color_info = AQI_CATEGORIES.get(category, AQI_CATEGORIES['Good'])
+        status_class = get_status_class(category)
+        
         with cols[idx]:
-            st.markdown(f'''
+            st.markdown(f"""
             <div class="forecast-card">
-                <div class="day-name">{row['day_name']} {get_aqi_emoji(row['category'])}</div>
+                <div class="day-name">{row['day_name']}</div>
                 <div class="date-text">{row['date']}</div>
-            </div>
-            ''', unsafe_allow_html=True)
-            
-            gradient = get_aqi_gradient(row['category'])
-            st.markdown(f'''
-            <div style="text-align: center;">
-                <div class="aqi-circle" style="background: {gradient};">
-                    {int(row['average_aqi'])}
+                <div class="aqi-value" style="color: {color_info['color']};">{row['average_aqi']:.2f}</div>
+                <div class="aqi-category" style="color: {color_info['color']};">{category}</div>
+                <div class="aqi-range">Range: {row['min_aqi']:.2f} - {row['max_aqi']:.2f}</div>
+                <div style="margin-top: 1rem;">
+                    <div class="{status_class}">
+                        {'SAFE' if category == 'Good' else 'ALERT'}
+                    </div>
                 </div>
             </div>
-            ''', unsafe_allow_html=True)
-            
-            st.markdown(f'''
-            <div class="forecast-card">
-                <div style="text-align: center;">
-                    <h3 style="color: #333; margin: 0 0 1rem 0;">{row['category']}</h3>
-                    <div class="aqi-range">Range: <b>{int(row['min_aqi'])} - {int(row['max_aqi'])}</b></div>
-                </div>
-            </div>
-            ''', unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
             
             if pd.notna(row['warning']):
-                st.warning(f"⚠️ {row['warning']}")
+                st.warning(row['warning'])
+    
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     
     # Trend chart
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     fig = create_trend_chart(predictions_df)
     st.plotly_chart(fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def show_model_comparison(comparison_df):
-    """Display model comparison with enhanced styling"""
+    """Display model comparison page"""
     
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-header">🤖 Model Performance Comparison</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Model Performance Analysis</div>', unsafe_allow_html=True)
     
-    # Best model section
+    # Best model highlight
     best_model = comparison_df[comparison_df['is_best'] == True].iloc[0]
     
-    st.markdown('<div class="section-header">🏆 Current Best Model</div>', unsafe_allow_html=True)
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color: #00d4ff; text-align: center; margin: 2rem 0 1rem 0;">Current Best Model</h3>', unsafe_allow_html=True)
     
     col1, col2, col3, col4 = st.columns(4, gap="large")
     
     with col1:
-        st.markdown(f'''
-        <div class="metric-card">
-            <div style="color: #667eea; font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem;">MODEL</div>
-            <div style="font-size: 1.5rem; font-weight: bold; color: #333;">{best_model['model']}</div>
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">Model</div>
+            <div class="metric-value" style="font-size: 1.5rem;">{best_model['model']}</div>
         </div>
-        ''', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
     with col2:
-        st.markdown(f'''
-        <div class="metric-card">
-            <div style="color: #667eea; font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem;">MAE</div>
-            <div style="font-size: 1.5rem; font-weight: bold; color: #333;">{best_model['mae']:.3f}</div>
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">MAE</div>
+            <div class="metric-value">{best_model['mae']:.4f}</div>
         </div>
-        ''', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
     with col3:
-        st.markdown(f'''
-        <div class="metric-card">
-            <div style="color: #667eea; font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem;">RMSE</div>
-            <div style="font-size: 1.5rem; font-weight: bold; color: #333;">{best_model['rmse']:.3f}</div>
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">RMSE</div>
+            <div class="metric-value">{best_model['rmse']:.4f}</div>
         </div>
-        ''', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
     with col4:
-        st.markdown(f'''
-        <div class="metric-card">
-            <div style="color: #667eea; font-size: 0.9rem; font-weight: bold; margin-bottom: 0.5rem;">R² SCORE</div>
-            <div style="font-size: 1.5rem; font-weight: bold; color: #667eea;">{best_model['r2_score']:.3f}</div>
+        st.markdown(f"""
+        <div class="metric-box">
+            <div class="metric-label">R² Score</div>
+            <div class="metric-value">{best_model['r2_score']:.4f}</div>
         </div>
-        ''', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     
-    # All models comparison chart
+    # Model comparison chart
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     fig = create_model_comparison_chart(comparison_df)
     st.plotly_chart(fig, use_container_width=True)
-    
-    # Detailed table
-    st.markdown('<div class="section-header">📊 Detailed Metrics</div>', unsafe_allow_html=True)
-    
-    display_df = comparison_df.copy()
-    display_df['Status'] = display_df['is_best'].apply(
-        lambda x: '<span class="status-badge best">🏆 SELECTED</span>' if x else ''
-    )
-    
-    # Format metrics for display
-    display_df['MAE'] = display_df['mae'].apply(lambda x: f"{x:.4f}")
-    display_df['RMSE'] = display_df['rmse'].apply(lambda x: f"{x:.4f}")
-    display_df['R² Score'] = display_df['r2_score'].apply(lambda x: f"{x:.4f}")
-    
-    st.dataframe(
-        display_df[['model', 'MAE', 'RMSE', 'R² Score']],
-        use_container_width=True,
-        hide_index=True
-    )
-
-def show_about():
-    """Display about page with enhanced styling"""
+    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-header">ℹ️ About This Project</div>', unsafe_allow_html=True)
     
-    st.markdown('''
-    <div class="about-box">
-        <h3>🎯 Project Overview</h3>
-        <p>
-            An advanced machine learning-powered Air Quality Index (AQI) forecasting system 
-            designed to predict air quality for Multan, Pakistan over the next 3 days. 
-            The system combines real-time data collection with state-of-the-art ML models 
-            to provide accurate and timely air quality predictions.
-        </p>
-    </div>
-    ''', unsafe_allow_html=True)
+    # Detailed metrics table
+    st.markdown('<h3 style="color: #00d4ff; margin: 2rem 0 1rem 0;">All Models Metrics</h3>', unsafe_allow_html=True)
     
-    st.markdown('''
-    <div class="about-box">
-        <h3>🔍 How It Works</h3>
-        <ol>
-            <li><b>Hourly Data Collection:</b> Continuously fetches air quality data from OpenWeather API</li>
-            <li><b>Daily Model Training:</b> Trains 3 different ML models on accumulated historical data</li>
-            <li><b>Model Selection:</b> Automatically selects the best-performing model based on R² score</li>
-            <li><b>3-Day Prediction:</b> Generates accurate forecasts for the next 3 days</li>
-            <li><b>Alert System:</b> Triggers alerts for Poor and Very Poor air quality conditions</li>
-        </ol>
+    display_df = comparison_df[['model', 'mae', 'rmse', 'r2_score']].copy()
+    display_df.columns = ['Model', 'MAE', 'RMSE', 'R² Score']
+    display_df['MAE'] = display_df['MAE'].apply(lambda x: f"{x:.4f}")
+    display_df['RMSE'] = display_df['RMSE'].apply(lambda x: f"{x:.4f}")
+    display_df['R² Score'] = display_df['R² Score'].apply(lambda x: f"{x:.4f}")
+    
+    st.dataframe(display_df, use_container_width=True, hide_index=True)
+
+def show_about():
+    """Display about page"""
+    
+    st.markdown('<div class="section-header">About This Project</div>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="about-section">
+        <div class="about-title">Project Overview</div>
+        <div class="about-text">
+            This AQI Forecasting System is an advanced machine learning solution designed to predict 
+            air quality conditions for the next 3 days in Multan, Pakistan. The system continuously 
+            collects real-time air quality data, processes it through multiple machine learning models, 
+            and selects the best-performing model to deliver accurate forecasts to help citizens make 
+            informed decisions about outdoor activities and health precautions.
+        </div>
     </div>
-    ''', unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+    
+    st.markdown('<h3 style="color: #00d4ff; margin: 2rem 0 1rem 0;">How It Works</h3>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown('''
-        <div class="about-box">
-            <h3>🤖 Machine Learning Models</h3>
-            <ul>
-                <li><b>Random Forest:</b> Ensemble method for robust predictions</li>
-                <li><b>XGBoost:</b> Gradient boosting for high accuracy</li>
-                <li><b>LightGBM:</b> Fast and efficient gradient boosting</li>
+        st.markdown("""
+        <div class="about-section">
+            <div style="color: #00d4ff; font-weight: bold; margin-bottom: 1rem;">Data Collection & Processing</div>
+            <ul style="color: #bbb; line-height: 2;">
+                <li>Hourly data ingestion from OpenWeather API</li>
+                <li>Real-time data validation and cleaning</li>
+                <li>Feature engineering and storage in Hopsworks</li>
+                <li>Historical data spanning Oct 2025 to present</li>
             </ul>
         </div>
-        ''', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
     with col2:
-        st.markdown('''
-        <div class="about-box">
-            <h3>📍 Location Information</h3>
-            <p><b>City:</b> Multan, Pakistan</p>
-            <p><b>Latitude:</b> 30.1979793</p>
-            <p><b>Longitude:</b> 71.4724978</p>
-            <p><b>Data Range:</b> Oct 2025 - Present</p>
-            <p><b>Update Frequency:</b> Hourly</p>
+        st.markdown("""
+        <div class="about-section">
+            <div style="color: #00d4ff; font-weight: bold; margin-bottom: 1rem;">Model Training & Prediction</div>
+            <ul style="color: #bbb; line-height: 2;">
+                <li>Daily model retraining on all historical data</li>
+                <li>Automatic best model selection via R² score</li>
+                <li>3-day AQI forecasting with confidence ranges</li>
+                <li>Alert system for Poor and Very Poor conditions</li>
+            </ul>
         </div>
-        ''', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
-    st.markdown('''
-    <div class="about-box">
-        <h3>📊 AQI Categories</h3>
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-top: 1rem;">
-            <div style="text-align: center; padding: 1rem; background: #00e400; border-radius: 10px; color: white; font-weight: bold;">
-                Good<br>(0-50)
-            </div>
-            <div style="text-align: center; padding: 1rem; background: #ffff00; border-radius: 10px; color: black; font-weight: bold;">
-                Fair<br>(51-100)
-            </div>
-            <div style="text-align: center; padding: 1rem; background: #ff7e00; border-radius: 10px; color: white; font-weight: bold;">
-                Moderate<br>(101-200)
-            </div>
-            <div style="text-align: center; padding: 1rem; background: #ff0000; border-radius: 10px; color: white; font-weight: bold;">
-                Poor<br>(201-300)
-            </div>
-            <div style="text-align: center; padding: 1rem; background: #8f3f97; border-radius: 10px; color: white; font-weight: bold;">
-                Very Poor<br>(301+)
-            </div>
-        </div>
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+    
+    st.markdown('<h3 style="color: #00d4ff; margin: 2rem 0 1rem 0;">Machine Learning Models</h3>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="model-info">
+        <div class="model-name">Random Forest</div>
+        <p style="color: #aaa;">
+            An ensemble learning method that constructs multiple decision trees and merges their predictions.
+            Random Forest is known for its robustness, ability to handle non-linear relationships, and resistance
+            to overfitting. It provides reliable baseline predictions and feature importance rankings.
+        </p>
     </div>
-    ''', unsafe_allow_html=True)
+    
+    <div class="model-info">
+        <div class="model-name">XGBoost</div>
+        <p style="color: #aaa;">
+            Extreme Gradient Boosting is a scalable and optimized gradient boosting framework that builds
+            sequential decision trees to correct previous errors. XGBoost excels at capturing complex patterns
+            in data and typically provides high-accuracy predictions. It's widely recognized as a top-performing
+            model in machine learning competitions.
+        </p>
+    </div>
+    
+    <div class="model-info">
+        <div class="model-name">LightGBM</div>
+        <p style="color: #aaa;">
+            Light Gradient Boosting Machine is a fast, distributed gradient boosting framework. LightGBM uses
+            leaf-wise tree growth strategy and supports categorical features natively. It's optimized for speed
+            and memory efficiency while maintaining high accuracy, making it ideal for real-time applications
+            like AQI forecasting.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+    
+    st.markdown('<h3 style="color: #00d4ff; margin: 2rem 0 1rem 0;">Location & Data</h3>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        <div class="about-section">
+            <div style="color: #00d4ff; font-weight: bold;">Multan, Pakistan</div>
+            <ul style="color: #bbb; margin-top: 1rem;">
+                <li>Latitude: 30.1979793</li>
+                <li>Longitude: 71.4724978</li>
+                <li>Data Source: OpenWeather API</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="about-section">
+            <div style="color: #00d4ff; font-weight: bold;">System Information</div>
+            <ul style="color: #bbb; margin-top: 1rem;">
+                <li>Data Range: Oct 2025 - Present</li>
+                <li>Update Frequency: Hourly</li>
+                <li>Feature Storage: Hopsworks</li>
+                <li>Update Frequency: Real-time</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
 
 # ==================== MAIN APPLICATION ====================
 def main():
     # Header
-    st.markdown('<div class="main-header">🌫️ AQI Forecast Dashboard</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">3-Day Air Quality Predictions for Multan, Pakistan</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-title">AQI Forecasting System</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">Next 3-days Air Quality Index Prediction for Multan</div>', unsafe_allow_html=True)
+    st.markdown('<div class="tagline">Stay informed. Stay safe.</div>', unsafe_allow_html=True)
     
     # Load data
-    with st.spinner("⏳ Loading predictions..."):
+    with st.spinner("Loading predictions..."):
         predictions_df, comparison_df = load_predictions()
     
-    # Last updated
+    # Current date and time
     pkt = pytz.timezone(TIMEZONE)
     current_time = datetime.now(pkt)
-    st.markdown(
-        f'<div class="last-updated">🕐 Last Updated: {current_time.strftime("%A, %B %d, %Y at %I:%M %p PKT")}</div>',
-        unsafe_allow_html=True
-    )
+    st.markdown(f'<div class="datetime-display">{current_time.strftime("%A, %B %d, %Y | %I:%M %p PKT")}</div>', unsafe_allow_html=True)
     
     # Sidebar navigation
-    st.sidebar.markdown('''
-    <div style="text-align: center; color: white; margin-bottom: 2rem;">
-        <h1 style="font-size: 1.5rem; margin: 0;">🌍 Navigation</h1>
+    st.sidebar.markdown("""
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <div class="sidebar-menu-title">MENU</div>
     </div>
-    ''', unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
     
     page = st.sidebar.radio(
-        "Select a page:",
-        ["📊 3-Day Forecast", "🤖 Model Comparison", "ℹ️ About"],
+        "Navigate to:",
+        ["3-Day Forecast", "Model Comparison", "About"],
         label_visibility="collapsed"
     )
     
-    st.sidebar.markdown("---")
-    st.sidebar.markdown('''
-    <div style="color: white; font-size: 0.9rem; text-align: center; margin-top: 2rem;">
-        <p><b>System Status:</b> ✅ Active</p>
-        <p><b>Data Source:</b> OpenWeather API</p>
-        <p><b>Update Cycle:</b> Hourly</p>
+    st.sidebar.markdown("<div style='margin-top: 3rem;'></div>", unsafe_allow_html=True)
+    st.sidebar.markdown("""
+    <div style="color: #00d4ff; font-size: 0.85rem; text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(0, 212, 255, 0.2);">
+        <p style="margin: 0.5rem 0;">System Status: Active</p>
+        <p style="margin: 0.5rem 0;">Data Source: OpenWeather API</p>
+        <p style="margin: 0.5rem 0;">Update: Every Hour</p>
     </div>
-    ''', unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
     
     # Page routing
-    if "📊" in page:
+    if page == "3-Day Forecast":
         show_forecast(predictions_df, comparison_df)
-    elif "🤖" in page:
+    elif page == "Model Comparison":
         show_model_comparison(comparison_df)
     else:
         show_about()
+    
+    # Footer
+    st.markdown('<div class="footer">Created by Saqib Ahmad Siddiqui</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
