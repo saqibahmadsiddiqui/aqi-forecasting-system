@@ -39,7 +39,7 @@ st.markdown("""
     
     /* header bar */
     header[data-testid="stHeader"] {
-        background-color: #00ffff !important;   /* Black header */
+        background-color: background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);   /* Cyan header */
     }
 
     /* Sidebar toggle + menu icons */
@@ -107,8 +107,28 @@ st.markdown("""
         fill: #ffffff !important;
         color: #ffffff !important;
     }
-
     
+    /* Sidebar toggle button (always visible) */
+    button[title="Close sidebar"],
+    button[title="Open sidebar"] {
+        color: white !important;
+    }
+
+    /* The SVG icon inside the button */
+    button[title="Close sidebar"] svg,
+    button[title="Open sidebar"] svg {
+        fill: white !important;
+        color: white !important;
+        opacity: 1 !important;
+    }
+
+    /* Optional: subtle hover glow */
+    button[title="Close sidebar"]:hover svg,
+    button[title="Open sidebar"]:hover svg {
+        fill: #00d4ff !important;
+        color: #00d4ff !important;
+    }
+
     /* Header styling */
     .main-title {
         font-size: 3.5rem;
