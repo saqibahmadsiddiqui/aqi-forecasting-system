@@ -457,6 +457,33 @@ st.markdown("""
         border-color: #00d4ff;
         background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 100, 150, 0.2) 100%);
     }
+    
+    /* ===== FIX STREAMLIT TOP HEADER BAR ===== */
+    header[data-testid="stHeader"] {
+        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%) !important;
+    }
+
+    /* Make all header icons/text white */
+    header[data-testid="stHeader"] button,
+    header[data-testid="stHeader"] svg,
+    header[data-testid="stHeader"] * {
+        color: #ffffff !important;
+        fill: #ffffff !important;
+        opacity: 1 !important;
+    }
+
+    /* Sidebar toggle buttons (open/close icons) */
+    button[title="Open sidebar"],
+    button[title="Close sidebar"] {
+        color: #ffffff !important;
+    }
+
+    button[title="Open sidebar"] svg,
+    button[title="Close sidebar"] svg {
+        fill: #ffffff !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
