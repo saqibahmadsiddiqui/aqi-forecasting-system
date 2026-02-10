@@ -37,9 +37,9 @@ st.markdown("""
         background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
     }
     
-    /* ===== STREAMLIT TOP HEADER BAR ===== */
+    /* header bar */
     header[data-testid="stHeader"] {
-        background-color: #000000 !important;   /* Black header */
+        background-color: #00ffff !important;   /* Black header */
     }
 
     /* Sidebar toggle + menu icons */
@@ -71,13 +71,43 @@ st.markdown("""
     
     [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
         padding-top: 1rem;
-        color: #ffffff;
     }
     
     /* Text colors for sidebar */
     [data-testid="stSidebar"] .css-1dp5vir {
         color: #ffffff !important;
     }
+    
+    /* sidebar text white */
+    section[data-testid="stSidebar"] * {
+        color: #ffffff !important;
+    }
+
+    /* Sidebar radio labels (3-Day Forecast, etc.) */
+    section[data-testid="stSidebar"] [role="radiogroup"] label {
+        color: #ffffff !important;
+        font-weight: 500;
+    }
+
+    /* Hover effect for sidebar options */
+    section[data-testid="stSidebar"] [role="radio"]:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-radius: 10px;
+    }
+
+    /* Selected radio button indicator */
+    section[data-testid="stSidebar"] [role="radio"][aria-checked="true"] div:first-child {
+        background-color: #00d4ff !important;
+        border-color: #00d4ff !important;
+    }
+
+    /* Sidebar open/close arrow icons */
+    button[title="Close sidebar"] svg,
+    button[title="Open sidebar"] svg {
+        fill: #ffffff !important;
+        color: #ffffff !important;
+    }
+
     
     /* Header styling */
     .main-title {
