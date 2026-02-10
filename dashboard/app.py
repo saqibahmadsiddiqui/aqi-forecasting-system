@@ -458,31 +458,24 @@ st.markdown("""
         background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 100, 150, 0.2) 100%);
     }
     
-    /* ===== FIX STREAMLIT TOP HEADER BAR ===== */
-    header[data-testid="stHeader"] {
-        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%) !important;
+    /* Make the main container leave space for footer */
+    [data-testid="stAppViewContainer"] {
+        padding-bottom: 120px;  /* enough space so footer won't overlap */
     }
 
-    /* Make all header icons/text white */
-    header[data-testid="stHeader"] button,
-    header[data-testid="stHeader"] svg,
-    header[data-testid="stHeader"] * {
-        color: #ffffff !important;
-        fill: #ffffff !important;
-        opacity: 1 !important;
-    }
-
-    /* Sidebar toggle buttons (open/close icons) */
-    button[title="Open sidebar"],
-    button[title="Close sidebar"] {
-        color: #ffffff !important;
-    }
-
-    button[title="Open sidebar"] svg,
-    button[title="Close sidebar"] svg {
-        fill: #ffffff !important;
-        color: #ffffff !important;
-        opacity: 1 !important;
+    /* Sticky footer */
+    .footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        padding: 1rem 0;
+        color: #00d4ff;
+        border-top: 2px solid rgba(0, 212, 255, 0.2);
+        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+        z-index: 100;
+        font-weight: 500;
+        font-size: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
