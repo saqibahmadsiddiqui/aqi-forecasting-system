@@ -17,9 +17,6 @@ load_dotenv()
 
 class HourlyPipeline:
     def __init__(self):
-        self.api_key = os.getenv("OPENWEATHER_API_KEY")
-        self.hopsworks_key = os.getenv("HOPSWORKS_API_KEY")
-        self.project_name = os.getenv("HOPSWORKS_PROJECT_NAME")
         self.lat = LAT
         self.lon = LON
         self.pkt = pytz.timezone(TIMEZONE)

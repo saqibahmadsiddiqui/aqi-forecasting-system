@@ -6,13 +6,9 @@ from datetime import datetime, timedelta
 import pytz
 from pathlib import Path
 import sys
-import os
-from dotenv import load_dotenv
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 from src.config.config import *
-
-load_dotenv()
 
 class AQIPredictor:
     def __init__(self):
@@ -23,8 +19,8 @@ class AQIPredictor:
         self.model_metrics = {}
         self.best_model_name = None
         
-        self.api_key = os.getenv("HOPSWORKS_API_KEY")
-        self.project_name = os.getenv("HOPSWORKS_PROJECT_NAME")
+        self.api_key = HOPSWORKS_API_KEY
+        self.project_name = HOPSWORKS_PROJECT_NAME
         
     def connect_hopsworks(self):
         self.project = hopsworks.login(
