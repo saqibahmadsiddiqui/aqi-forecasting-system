@@ -14,7 +14,7 @@ from src.prediction.predictor import AQIPredictor
 from src.config.config import *
 
 st.set_page_config(
-    page_title="AQI Forecast - Multan",
+    page_title="AQI Forecast - Multan Pakistan",
     page_icon="🌫️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -56,6 +56,7 @@ st.markdown("""
     
     [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
         padding-top: 1rem;
+        color: #ffffff;
     }
     
     /* Text colors for sidebar */
