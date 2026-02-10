@@ -99,7 +99,7 @@ class AQIPredictor:
         print(f"Using context data up to: {latest_data['datetime'].max()}") # Verify latest date
         
         pkt = pytz.timezone(TIMEZONE)
-        now = datetime.now(pkt)
+        today_pkt = datetime.now(pkt).date()
         
         predictions = []
         
@@ -107,7 +107,7 @@ class AQIPredictor:
         feature_cols = [col for col in all_cols if col not in ['datetime', 'timestamp', 'aqi']]
         
         for day_offset in range(1, 4):
-            target_date = (now + timedelta(days=day_offset)).date()
+            target_date = today_pkt + timedelta(days=day_offset)
             hourly_preds = []
             
             for hour in range(24):
