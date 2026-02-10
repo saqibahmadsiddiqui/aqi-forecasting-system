@@ -46,11 +46,6 @@ st.markdown("""
     header[data-testid="stHeader"] button {
         color: #ffffff !important;              /* White icons */
     }
-
-    /* "Deploy", menu text, etc. */
-    header[data-testid="stHeader"] * {
-        color: #ffffff !important;              /* White text */
-    }
     
     /* Sidebar styling with animation */
     [data-testid="stSidebar"] {
@@ -894,7 +889,7 @@ def main():
     <div style="color: #00d4ff; font-size: 0.85rem; text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid rgba(0, 212, 255, 0.2);">
         <p style="margin: 0.5rem 0;">System Status: Active</p>
         <p style="margin: 0.5rem 0;">Data Source: OpenWeather API</p>
-        <p style="margin: 0.5rem 0;">Update: Every Hour</p>
+        <p style="margin: 0.5rem 0;">Update: Every Day 05:00 A.M PST</p>
     </div>
     """, unsafe_allow_html=True)
     
