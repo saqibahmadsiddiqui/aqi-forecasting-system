@@ -37,6 +37,21 @@ st.markdown("""
         background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
     }
     
+    /* ===== STREAMLIT TOP HEADER BAR ===== */
+    header[data-testid="stHeader"] {
+        background-color: #000000 !important;   /* Black header */
+    }
+
+    /* Sidebar toggle + menu icons */
+    header[data-testid="stHeader"] button {
+        color: #ffffff !important;              /* White icons */
+    }
+
+    /* "Deploy", menu text, etc. */
+    header[data-testid="stHeader"] * {
+        color: #ffffff !important;              /* White text */
+    }
+    
     /* Sidebar styling with animation */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%);
