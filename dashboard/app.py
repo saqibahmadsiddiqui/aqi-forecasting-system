@@ -39,7 +39,7 @@ st.markdown("""
     
     /* header bar */
     header[data-testid="stHeader"] {
-        background-color: background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);   /* Cyan header */
+        background-color: #00d4ff;   /* Cyan header */
     }
 
     /* Sidebar toggle + menu icons */
