@@ -484,29 +484,6 @@ st.markdown("""
         color: #ffffff !important;
         opacity: 1 !important;
     }
-    
-    /* Header toolbar container */
-    header[data-testid="stHeader"] div[data-testid="stToolbar"] button {
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-
-    /* The SVG icon inside the button */
-    header[data-testid="stHeader"] div[data-testid="stToolbar"] button svg {
-        fill: #ffffff !important;
-        color: #ffffff !important;
-        opacity: 1 !important;
-    }
-
-    /* Remove Streamlit fade effect */
-    header[data-testid="stHeader"] div[data-testid="stToolbar"] {
-        opacity: 1 !important;
-    }
-
-    /* Optional: glow on hover */
-    header[data-testid="stHeader"] div[data-testid="stToolbar"] button:hover svg {
-        fill: #00d4ff !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
