@@ -459,9 +459,9 @@ st.markdown("""
     }
     
     /* Make the main container leave space for footer */
-    # [data-testid="stAppViewContainer"] {
-    #     padding-bottom: 120px;  /* enough space so footer won't overlap */
-    # }
+    [data-testid="stAppViewContainer"] {
+        padding-bottom: 120px;  /* enough space so footer won't overlap */
+    }
 </style>
 """, unsafe_allow_html=True)
 
