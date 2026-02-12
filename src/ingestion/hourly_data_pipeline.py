@@ -67,28 +67,7 @@ class HourlyPipeline:
         
         print(f"Fetched: {pkt_time}, AQI={data['aqi']}")
         return pd.DataFrame([data])
-    
-    #def check_duplicate(self, new, recent_hist):
-        print("Checking duplicates (last 6h)...")
-        
-        new_dt = pd.to_datetime(new['datetime'].iloc[0])
-        six_h_ago = new_dt - timedelta(hours=6)
-        
-        # Filter the history we already pulled
-        recent = recent_hist[recent_hist['datetime'] >= six_h_ago]
-        
-        if len(recent) == 0:
-            return False
-        
-        cols = ['aqi', 'pm2_5', 'pm10', 'temp']
-        new_vals = new[cols].iloc[0]
-        
-        for _, row in recent.iterrows():
-            if all(abs(row[c] - new_vals[c]) < 0.01 for c in cols):
-                print(f"Duplicate found (matches {row['datetime']})")
-                return True
-        return False
-        
+       
     def check_duplicate(self, new, recent_hist):
         print("\nChecking duplicates (last 6h)...")
         

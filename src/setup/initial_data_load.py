@@ -6,20 +6,13 @@ import pytz
 import hopsworks
 import sys
 from pathlib import Path
-import os
-from dotenv import load_dotenv
 import time
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 from src.config.config import *
 
-load_dotenv()
-
 class InitialBackfill:
     def __init__(self):
-        self.api_key = os.getenv("OPENWEATHER_API_KEY")
-        self.hopsworks_key = os.getenv("HOPSWORKS_API_KEY")
-        self.project_name = os.getenv("HOPSWORKS_PROJECT_NAME")
         self.lat = LAT
         self.lon = LON
         self.pkt = pytz.timezone(TIMEZONE)
@@ -30,12 +23,11 @@ class InitialBackfill:
     def connect_hopsworks(self):
         self.project = hopsworks.login(
             host=HOPSWORKS_HOST,
-            api_key_value=self.hopsworks_key,
-            project=self.project_name
+            api_key_value=HOPSWORKS_API_KEY,
+            project=HOPSWORKS_PROJECT_NAME
         )
         self.fs = self.project.get_feature_store()
         
-        # Get existing feature group (NOT create new)
         self.fg = self.fs.get_or_create_feature_group(
             name=FEATURE_GROUP_NAME,
             version=FEATURE_GROUP_VERSION,
@@ -77,8 +69,8 @@ class InitialBackfill:
             start_ts = int(current_date.timestamp())
             end_ts = int(next_date.timestamp())
             
-            pollution_url = f"http://api.openweathermap.org/data/2.5/air_pollution/history?lat={self.lat}&lon={self.lon}&start={start_ts}&end={end_ts}&appid={self.api_key}"
-            weather_url = f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={self.lat}&lon={self.lon}&dt={start_ts}&appid={self.api_key}&units=metric"
+            pollution_url = f"http://api.openweathermap.org/data/2.5/air_pollution/history?lat={self.lat}&lon={self.lon}&start={start_ts}&end={end_ts}&appid={OPENWEATHER_API_KEY}"
+            weather_url = f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={self.lat}&lon={self.lon}&dt={start_ts}&appid={OPENWEATHER_API_KEY}&units=metric"
             
             pollution_resp = requests.get(pollution_url).json()
             weather_resp = requests.get(weather_url).json()
@@ -120,7 +112,6 @@ class InitialBackfill:
         print("ENGINEERING FEATURES")
         print("="*60)
         
-        # Combine historical + new
         combined = pd.concat([historical_data, new_data], ignore_index=True)
         combined = combined.sort_values('datetime').reset_index(drop=True)
         
@@ -129,7 +120,6 @@ class InitialBackfill:
         for idx in range(start_idx, len(combined)):
             dt = combined.loc[idx, 'datetime']
             
-            # Time features
             combined.loc[idx, 'hour_sin'] = np.sin(2 * np.pi * dt.hour / 24)
             combined.loc[idx, 'hour_cos'] = np.cos(2 * np.pi * dt.hour / 24)
             combined.loc[idx, 'day_of_week_sin'] = np.sin(2 * np.pi * dt.weekday() / 7)
@@ -138,7 +128,6 @@ class InitialBackfill:
             combined.loc[idx, 'month_cos'] = np.cos(2 * np.pi * dt.month / 12)
             combined.loc[idx, 'is_weekend'] = 1 if dt.weekday() >= 5 else 0
             
-            # Lags
             for lag in [1, 3, 6, 12, 24, 48]:
                 if idx >= lag:
                     combined.loc[idx, f'aqi_lag_{lag}h'] = combined.loc[idx - lag, 'aqi']
@@ -147,7 +136,6 @@ class InitialBackfill:
                     if lag in [1, 3, 24]:
                         combined.loc[idx, f'pm10_lag_{lag}h'] = combined.loc[idx - lag, 'pm10']
             
-            # Rolling
             for w in [3, 6, 12, 24]:
                 if idx >= w - 1:
                     combined.loc[idx, f'aqi_rolling_mean_{w}h'] = combined.loc[max(0, idx-w+1):idx+1, 'aqi'].mean()
@@ -163,10 +151,8 @@ class InitialBackfill:
                 combined.loc[idx, 'pm2_5_rolling_mean_24h'] = combined.loc[idx-23:idx+1, 'pm2_5'].mean()
                 combined.loc[idx, 'aqi_change_24h'] = combined.loc[idx, 'aqi'] - combined.loc[idx-24, 'aqi']
             
-            # Interaction
             combined.loc[idx, 'pm2_5_x_wind_speed'] = combined.loc[idx, 'pm2_5'] * combined.loc[idx, 'wind_speed']
         
-        # Extract only NEW rows
         new_engineered = combined.iloc[start_idx:].copy()
         
         print(f"Engineered {len(new_engineered)} new records")
@@ -177,7 +163,6 @@ class InitialBackfill:
         print("APPENDING TO FEATURE STORE")
         print("="*60)
         
-        # Prepare data
         data = data.fillna(0)
         data['timestamp'] = data['datetime'].values.astype('int64') // 10**6
         data['is_weekend'] = data['is_weekend'].astype('int64')
@@ -186,7 +171,6 @@ class InitialBackfill:
         print(f"Uploading {len(data)} records...")
         print("(This will APPEND to existing 2857 records)")
         
-        # Insert - will append to existing data
         self.fg.insert(data, write_options={"start_offline_materialization": True})
         self.fg.commit_details(wallclock_time=None, limit=None)
         
@@ -211,13 +195,10 @@ class InitialBackfill:
         print("BACKFILL - APPEND NEW DATA")
         print("="*80)
         
-        # Connect
         self.connect_hopsworks()
         
-        # Get existing data
         existing, latest = self.get_latest_date()
         
-        # Determine date range for new data
         start = latest + timedelta(hours=1)
         end = datetime.now(timezone.utc)
         
@@ -225,25 +206,20 @@ class InitialBackfill:
             print(f"\nAlready up to date (latest: {latest})")
             print("\nProceeding to training & prediction...")
         else:
-            # Extract only raw columns from existing data
             raw_cols = ['datetime', 'aqi', 'co', 'no2', 'pm2_5', 'pm10', 
                        'temp', 'feels_like', 'pressure', 'dew_point', 
                        'wind_speed', 'wind_deg']
             historical_raw = existing[raw_cols].copy()
             
-            # Extract new raw data
             new_raw = self.extract_data(start, end)
             
             if new_raw is None or len(new_raw) == 0:
                 print("\nNo new data available")
             else:
-                # Engineer features using historical context
                 new_featured = self.engineer_features(new_raw, historical_raw)
                 
-                # Append to existing feature group
                 self.upload(new_featured)
                 
-                # Verify
                 self.verify()
         
         print("\n" + "="*80)

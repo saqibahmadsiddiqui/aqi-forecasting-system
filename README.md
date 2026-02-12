@@ -20,7 +20,7 @@ End-to-end machine learning system that predicts Air Quality Index (AQI) for the
 The system continuously:
 - 📥 Collects real-time air quality data hourly from OpenWeather API
 - 🔧 Engineers 40+ advanced features (time, lag, rolling statistics, interactions)
-- 🤖 Trains 3 ML models daily (Random Forest, XGBoost, LightGBM)
+- 🤖 Trains 3 ML models daily (Random Forest, HistGradientBoostingClassifier, LightGBM)
 - 📈 Generates accurate 3-day AQI forecasts
 - 📊 Provides interactive visualizations and alerts
 - 🌐 Serves predictions via web dashboard
@@ -30,7 +30,7 @@ The system continuously:
 ✅ **Hourly Data Pipeline**: Automated data collection from OpenWeather API every hour  
 ✅ **Smart Duplicate Detection**: Compares with last 6 hours to avoid redundant storage  
 ✅ **40+ Engineered Features**: Time-based, lag features, rolling statistics, interactions  
-✅ **3 ML Models**: Random Forest, XGBoost, LightGBM with auto best model selection  
+✅ **3 ML Models**: Random Forest, HistGradientBoostingClassifier, LightGBM with auto best model selection  
 ✅ **Daily Retraining**: Models retrain daily with cumulative historical data  
 ✅ **3-Day Forecasts**: Hourly predictions aggregated to daily averages with ranges  
 ✅ **Beautiful Dashboard**: Dark theme, animated sidebar, real-time visualizations  
@@ -45,8 +45,8 @@ The system continuously:
 | Model | RMSE | MAE | R² Score | Status |
 |-------|------|-----|----------|--------|
 | **Random Forest** | 0.026 | 0.004 | 0.999 | ⭐ SELECTED |
-| XGBoost | 0.035 | 0.002 | 0.997 | Good |
-| LightGBM | 0.049 | 0.012 | 0.995 | Good |
+| **HistGradientBoostingClassifier** | 0.035 | 0.002 | 0.997 | Good |
+| **LightGBM** | 0.049 | 0.012 | 0.995 | Good |
 
 *Performance metrics updated daily. Random Forest selected for best RMSE performance.*
 
@@ -110,7 +110,7 @@ The system continuously:
 
 ### **Machine Learning**
 - **scikit-learn**: Random Forest, preprocessing
-- **XGBoost**: Gradient boosting model
+- **HistGradientBoostingClassifier**: Gradient boosting model
 - **LightGBM**: Fast gradient boosting
 - **pandas** & **numpy**: Data processing
 - **joblib**: Model serialization
@@ -272,7 +272,7 @@ Schedule: 0 0 * * *
 
 Tasks:
   1. Load all data from Feature Store
-  2. Train 3 models (RF, XGBoost, LightGBM)
+  2. Train 3 models (RF, HistGradientBoostingClassifier, LightGBM)
   3. Evaluate performance (RMSE, MAE, R²)
   4. Select best model (lowest RMSE)
   5. Register in Hopsworks Model Registry
@@ -388,7 +388,7 @@ Response: {
 GET /models
 Response: [
   {"model": "Random Forest", "r2": 0.999, "mae": 0.004, "rmse": 0.026},
-  {"model": "XGBoost", "r2": 0.997, "mae": 0.002, "rmse": 0.035},
+  {"model": "HistGradientBoostingClassifier", "r2": 0.997, "mae": 0.002, "rmse": 0.035},
   {"model": "LightGBM", "r2": 0.995, "mae": 0.012, "rmse": 0.049}
 ]
 ```
@@ -422,9 +422,9 @@ aqi-forecasting-system/
 │   └── processed/                    # Final predictions & CSVs
 │
 ├── models/                           # Saved ML models
-│   ├── random_forest_model.joblib
-│   ├── xgboost_model.joblib
-│   └── lightgbm_model.joblib
+│   ├── random_forest.joblib
+│   ├── gradien_boosting.joblib
+│   └── lightgbm.joblib
 │
 ├── notebooks/                        # Jupyter notebooks (EDA)
 │   └── exploratory_data_analysis.ipynb
@@ -574,7 +574,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 - **Hopsworks**: Feature store and ML ops platform
 - **Streamlit**: Interactive dashboard framework
 - **GitHub Actions**: CI/CD automation
-- **scikit-learn, XGBoost, LightGBM**: ML libraries
+- **scikit-learn, LightGBM**: ML libraries
 
 ---
 

@@ -144,8 +144,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-import xgboost as xgb
+from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 import lightgbm as lgb
 from sklearn.metrics import accuracy_score, f1_score
 import hopsworks
@@ -183,31 +182,56 @@ class DailyTraining:
         return df.sort_values('datetime').reset_index(drop=True)
     
     def train_models(self, X_train, X_test, y_train, y_test):
-        y_train_xgb = y_train - 1
+        from sklearn.ensemble import HistGradientBoostingClassifier
+        print("\nTraining Classifiers...")
+        
+        # We use the original 1-5 labels. Scikit-Learn models handle this perfectly.
+        y_train_clean = y_train.values.flatten().astype(int)
+        y_test_clean = y_test.values.flatten().astype(int)
 
-        models = {
-            "random_forest": RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42),
-            "xgboost": xgb.XGBClassifier(n_estimators=100, objective='multi:softmax', num_class=5, random_state=42),
-            "lightgbm": lgb.LGBMClassifier(n_estimators=100, class_weight='balanced', random_state=42, verbose=-1)
+        models_to_train = {
+            "random_forest": RandomForestClassifier(
+                n_estimators=100, 
+                class_weight='balanced', 
+                random_state=42,
+                n_jobs=-1
+            ),
+            "gradient_boosting": HistGradientBoostingClassifier(
+                max_iter=100,
+                random_state=42,
+                class_weight='balanced' # Great for your 95% imbalance
+            ),
+            "lightgbm": lgb.LGBMClassifier(
+                n_estimators=100, 
+                class_weight='balanced',
+                random_state=42, 
+                n_jobs=-1, 
+                verbose=-1
+            )
         }
         
         results = {}
-        for name, model in models.items():
+        for name, model in models_to_train.items():
             print(f"Training {name}...")
-            if name == "xgboost":
-                model.fit(X_train, y_train_xgb)
-                preds = model.predict(X_test) + 1
-            else:
-                model.fit(X_train, y_train)
-                preds = model.predict(X_test)
+            
+            # Simple fit using original 1-5 categories
+            model.fit(X_train, y_train_clean)
+            preds = model.predict(X_test)
+            
+            acc = accuracy_score(y_test_clean, preds)
+            f1 = f1_score(y_test_clean, preds, average='weighted')
             
             results[name] = {
                 'model': model,
-                'accuracy': accuracy_score(y_test, preds),
-                'f1_score': f1_score(y_test, preds, average='weighted')
+                'accuracy': acc,
+                'f1_score': f1
             }
+            print(f"  {name} Accuracy: {acc:.3f}, F1: {f1:.3f}")
+            
         return results
-    
+
+
+
     def register_models(self, results):
         for name, data in results.items():
             with tempfile.TemporaryDirectory() as model_dir:
