@@ -39,91 +39,99 @@ st.markdown("""
     
     /* header bar */
     header[data-testid="stHeader"] {
-        background-color: #00d4ff;   /* Cyan header */
+        background-color: #00d4ff;
     }
 
-    /* Sidebar toggle + menu icons */
+    /* Header icons */
     header[data-testid="stHeader"] button {
-        color: #ffffff !important;              /* White icons */
+        color: #ffffff !important;
     }
     
-    /* Sidebar styling with animation */
+    /* ==================== SIDEBAR STYLING ==================== */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%);
-        animation: slideIn 0.5s ease-out;
-    }
-    
-    @keyframes slideIn {
-        from {
-            transform: translateX(-100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
     }
     
     [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
         padding-top: 1rem;
     }
     
-    /* Text colors for sidebar */
-    [data-testid="stSidebar"] .css-1dp5vir {
+    /* All text in sidebar */
+    [data-testid="stSidebar"] {
         color: #ffffff !important;
     }
     
-    /* sidebar text white */
-    section[data-testid="stSidebar"] * {
+    [data-testid="stSidebar"] p {
+        color: #ffffff !important;
+    }
+    
+    [data-testid="stSidebar"] label {
+        color: #ffffff !important;
+    }
+    
+    [data-testid="stSidebar"] span {
+        color: #ffffff !important;
+    }
+    
+    [data-testid="stSidebar"] div {
         color: #ffffff !important;
     }
 
-    /* Sidebar radio labels (3-Day Forecast, etc.) */
-    section[data-testid="stSidebar"] [role="radiogroup"] label {
-        color: #ffffff !important;
-        font-weight: 500;
+    /* Radio button group */
+    [data-testid="stSidebar"] [role="radiogroup"] {
+        gap: 0.5rem;
     }
 
-    /* Hover effect for sidebar options */
-    section[data-testid="stSidebar"] [role="radio"]:hover {
-        background: rgba(255, 255, 255, 0.08) !important;
+    /* Individual radio button styling */
+    [data-testid="stSidebar"] [role="radio"] {
+        background: rgba(0, 212, 255, 0.08);
+        border: 2px solid rgba(0, 212, 255, 0.3);
         border-radius: 10px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
     }
 
-    /* Selected radio button indicator */
-    section[data-testid="stSidebar"] [role="radio"][aria-checked="true"] div:first-child {
-        background-color: #00d4ff !important;
+    /* Radio button hover state */
+    [data-testid="stSidebar"] [role="radio"]:hover {
+        background: rgba(0, 212, 255, 0.15) !important;
         border-color: #00d4ff !important;
     }
 
-    /* Sidebar open/close arrow icons */
-    button[title="Close sidebar"] svg,
-    button[title="Open sidebar"] svg {
-        fill: #ffffff !important;
-        color: #ffffff !important;
-    }
-    
-    /* Sidebar toggle button (always visible) */
-    button[title="Close sidebar"],
-    button[title="Open sidebar"] {
-        color: white !important;
+    /* Selected radio button */
+    [data-testid="stSidebar"] [role="radio"][aria-checked="true"] {
+        background: rgba(0, 212, 255, 0.25);
+        border-color: #00d4ff !important;
     }
 
-    /* The SVG icon inside the button */
+    /* Sidebar toggle button styling */
+    button[title="Close sidebar"],
+    button[title="Open sidebar"] {
+        background: transparent !important;
+    }
+
     button[title="Close sidebar"] svg,
     button[title="Open sidebar"] svg {
         fill: white !important;
-        color: white !important;
-        opacity: 1 !important;
     }
-
-    /* Optional: subtle hover glow */
-    button[title="Close sidebar"]:hover svg,
-    button[title="Open sidebar"]:hover svg {
-        fill: #00d4ff !important;
-        color: #00d4ff !important;
+    
+    /* ==================== FOOTER STYLING ==================== */
+    .footer {
+        text-align: center;
+        padding: 2rem;
+        color: #00d4ff;
+        font-size: 1rem;
+        border-top: 2px solid rgba(0, 212, 255, 0.2);
+        font-weight: 500;
+        margin-top: 3rem;
+        position: relative;
+        z-index: 10;
     }
-
+    
+    /* Spacer to prevent overlap */
+    .footer-spacer {
+        height: 100px;
+    }
+    
     /* Header styling */
     .main-title {
         font-size: 3.5rem;
@@ -385,17 +393,6 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
     
-    /* Footer */
-    .footer {
-        text-align: center;
-        margin-top: 3rem;
-        padding: 2rem;
-        color: #00d4ff;
-        font-size: 1rem;
-        border-top: 2px solid rgba(0, 212, 255, 0.2);
-        font-weight: 500;
-    }
-    
     /* Chart styling */
     .chart-container {
         background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(0, 100, 150, 0.05) 100%);
@@ -438,29 +435,6 @@ st.markdown("""
         margin-bottom: 2rem;
         padding-bottom: 1rem;
         border-bottom: 2px solid rgba(0, 212, 255, 0.3);
-    }
-    
-    /* Navigation radio buttons */
-    [data-testid="stSidebar"] [role="radiogroup"] {
-        gap: 1rem;
-    }
-    
-    [data-testid="stSidebar"] [role="radio"] {
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 100, 150, 0.1) 100%);
-        border: 2px solid rgba(0, 212, 255, 0.3);
-        border-radius: 12px;
-        padding: 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    [data-testid="stSidebar"] [role="radio"]:hover {
-        border-color: #00d4ff;
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 100, 150, 0.2) 100%);
-    }
-    
-    /* Make the main container leave space for footer */
-    [data-testid="stAppViewContainer"] {
-        padding-bottom: 120px;  /* enough space so footer won't overlap */
     }
 </style>
 """, unsafe_allow_html=True)
@@ -906,7 +880,8 @@ def main():
     else:
         show_about()
     
-    # Footer
+    # Footer with spacing
+    st.markdown('<div style="height: 50px;"></div>', unsafe_allow_html=True)
     st.markdown('<div class="footer">Created by Saqib Ahmad Siddiqui</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
