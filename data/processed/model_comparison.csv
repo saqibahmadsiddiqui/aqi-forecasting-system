@@ -1,4 +1,4 @@
 model,f1_score,accuracy,version,is_best
-Gradient Boosting,1.0,1.0,6,True
-Lightgbm,1.0,1.0,19,False
-Random Forest,0.9960364894369763,0.9968152866242038,19,False
+Gradient Boosting,0.9963295277334819,0.9963154016212233,7,True
+Lightgbm,0.9963136915194604,0.9963154016212233,20,False
+Random Forest,0.9911595263303177,0.9911569638909359,20,False
