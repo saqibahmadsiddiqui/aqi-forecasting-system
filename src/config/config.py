@@ -25,7 +25,7 @@ LAT = 30.1979793
 LON = 71.4724978
 TIMEZONE = "Asia/Karachi"
 
-MODEL_NAMES = ["random_forest", "xgboost", "lightgbm"]
+MODEL_NAMES = ["random_forest", "gradient_boosting", "lightgbm", "decision_tree", "sklearn_gradient_boosting"]
 PREDICTION_HORIZON_DAYS = 3
 
 for directory in [RAW_DATA_DIR, INTERIM_DATA_DIR, PROCESSED_DATA_DIR, MODELS_DIR]:
