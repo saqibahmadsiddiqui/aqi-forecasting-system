@@ -1,4 +1,13 @@
+<<<<<<< HEAD
 model,f1_score,accuracy,version,is_best
 Gradient Boosting,0.9963295277334819,0.9963154016212233,7,True
 Lightgbm,0.9963136915194604,0.9963154016212233,20,False
 Random Forest,0.9911595263303177,0.9911569638909359,20,False
+=======
+model,f1_score,accuracy,precision,recall,version,is_best
+Gradient Boosting,0.9993,0.9993,0.9993,0.9993,9,True
+Sklearn Gradient Boosting,0.9985,0.9985,0.9985,0.9985,1,False
+Lightgbm,0.9963,0.9963,0.9963,0.9963,22,False
+Decision Tree,0.9904,0.9904,0.9905,0.9904,2,False
+Random Forest,0.9897,0.9897,0.9898,0.9897,22,False
+>>>>>>> 9994e33 (Final Version)
