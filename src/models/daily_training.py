@@ -33,6 +33,7 @@ class DailyTraining:
         print("Connected to Hopsworks")
     
     def load_data(self):
+        """Load data from feature store"""
         print("\nLoading data from Feature Store...")
         fg = self.fs.get_feature_group(name=FEATURE_GROUP_NAME, version=FEATURE_GROUP_VERSION)
         df = fg.read(online=True)
@@ -41,10 +42,8 @@ class DailyTraining:
         
         print(f"  Total records: {len(df_sorted)}")
         print(f"  Date range: {df_sorted['datetime'].min()} to {df_sorted['datetime'].max()}")
-        print(f"  Missing values: {df_sorted.isnull().sum().sum()} total")
         print(f"  AQI distribution:")
         
-        # Print distribution
         for aqi_class in sorted(df_sorted['aqi'].unique()):
             count = (df_sorted['aqi'] == aqi_class).sum()
             pct = (count / len(df_sorted)) * 100
@@ -83,6 +82,7 @@ class DailyTraining:
             pct = (count / len(y)) * 100
             print(f"  Class {aqi_class}: {count:5d} samples ({pct:5.2f}%)")
         
+        # Check if stratify is possible
         min_class_count = y.value_counts().min()
         
         if min_class_count < 2:
@@ -93,6 +93,7 @@ class DailyTraining:
             print(f"\nAll classes have ≥2 samples - using stratified split")
             stratify_option = y
         
+        # Train-test split
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, 
             test_size=0.2, 
@@ -102,9 +103,9 @@ class DailyTraining:
         )
         
         print(f"\nData split completed:")
-        print(f" Training samples: {len(X_train)}")
-        print(f" Testing samples:  {len(X_test)}")
-        print(f" Train/Test ratio: {len(X_train)/len(X_test):.2f}:1")
+        print(f"  Training samples: {len(X_train)}")
+        print(f"  Testing samples:  {len(X_test)}")
+        print(f"  Train/Test ratio: {len(X_train)/len(X_test):.2f}:1")
         
         return X_train, X_test, y_train, y_test
     
@@ -114,11 +115,9 @@ class DailyTraining:
         print("TRAINING 5 CLASSIFICATION MODELS")
         print("="*60)
         
-        # Prepare clean labels
         y_train_clean = y_train.values.flatten().astype(int)
         y_test_clean = y_test.values.flatten().astype(int)
         
-        # Define 5 models with optimal hyperparameters
         models_config = {
             "random_forest": {
                 "model": RandomForestClassifier(
@@ -175,7 +174,7 @@ class DailyTraining:
                     random_state=42,
                     verbose=0
                 ),
-                "description": "Scikit-Learn Gradient Boosting (with NaN handling)"
+                "description": "Scikit-Learn Gradient Boosting"
             }
         }
         
@@ -183,7 +182,7 @@ class DailyTraining:
         
         for name, config in models_config.items():
             print(f"\nTraining: {name}")
-            print(f" Description: {config['description']}")
+            print(f"   Description: {config['description']}")
             
             try:
                 model = config['model']
@@ -224,7 +223,7 @@ class DailyTraining:
         
         for name, data in results.items():
             try:
-                print(f"\nRegistering: {name}")
+                print(f"\n📌 Registering: {name}")
                 
                 with tempfile.TemporaryDirectory() as model_dir:
                     model_path = Path(model_dir) / "model.joblib"
@@ -252,8 +251,8 @@ class DailyTraining:
                         'metrics': metrics
                     }
                     
-                    print(f"  Registered: aqi_{name} (v{registered.version})")
-                    print(f"   F1: {metrics['f1_score']:.4f} | Acc: {metrics['accuracy']:.4f}")
+                    print(f"   Registered: aqi_{name} (v{registered.version})")
+                    print(f"      F1: {metrics['f1_score']:.4f} | Acc: {metrics['accuracy']:.4f}")
                     
             except Exception as e:
                 print(f"   Error registering {name}: {str(e)}")
@@ -278,8 +277,8 @@ class DailyTraining:
             print("TRAINING PIPELINE COMPLETE")
             print("="*80)
             print(f"\nSummary:")
-            print(f" Models trained: {len(results)}")
-            print(f" Models registered: {len(registered_models)}")
+            print(f"   Models trained: {len(results)}")
+            print(f"   Models registered: {len(registered_models)}")
             
             if results:
                 best_model = max(results.items(), key=lambda x: x[1]['f1_score'])
@@ -291,7 +290,7 @@ class DailyTraining:
                 print(f"   Recall: {best_model[1]['recall']:.4f}")
             
             print("\n" + "="*80)
-            print("Ready for predictions!")
+            print("Ready for predictions! 🎯")
             print("="*80)
             
         except Exception as e:

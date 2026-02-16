@@ -1,136 +1,195 @@
 # 🌫️ AQI Forecasting System - Multan, Pakistan
 
-**100% Serverless 3-Day Air Quality Prediction System**
+**Production-Ready 3-Day Air Quality Prediction with 5 ML Models & Complete MLOps Pipeline**
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://multan-aqi.streamlit.app)
-[![GitHub](https://img.shields.io/badge/GitHub-saqibahmadsiddiqui-blue?logo=github)](https://github.com/saqibahmadsiddiqui)
-[![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)](https://www.python.org/)
+[![GitHub](https://img.shields.io/badge/GitHub-saqibahmadsiddiqui-blue?logo=github)](https://github.com/saqibahmadsiddiqui/aqi-forecasting-system)
 
 ## 🚀 Live Demo
 
-- **📊 Dashboard**: [https://multan-aqi.streamlit.app](https://multan-aqi.streamlit.app)
+- **📊 Dashboard**: https://multan-aqi.streamlit.app
 - **📍 Location**: Multan, Punjab, Pakistan (30.1979°N, 71.4724°E)
-- **⚡ Update Frequency**: Hourly data collection, Daily model retraining at 12 AM UTC (5 AM PKT)
-- **🎯 Forecast Horizon**: 3 days ahead with daily averages
+- **⚡ Update Frequency**: Hourly data collection, Daily model training at 12:00 AM UTC (5:00 AM PKT)
+- **🎯 Forecast Horizon**: 72-hour ahead with daily aggregates
 
 ## 🎯 Project Overview
 
-End-to-end machine learning system that predicts Air Quality Index (AQI) for the next 3 days in Multan, Pakistan. Built with a completely serverless architecture using Hopsworks Feature Store, GitHub Actions for CI/CD, and deployed on Streamlit Cloud.
+An end-to-end production-ready machine learning system that predicts average Air Quality Index (AQI) for the next 3 days in Multan, Pakistan. Built with a **completely serverless architecture** using:
 
-The system continuously:
-- 📥 Collects real-time air quality data hourly from OpenWeather API
-- 🔧 Engineers 40+ advanced features (time, lag, rolling statistics, interactions)
-- 🤖 Trains 3 ML models daily (Random Forest, HistGradientBoostingClassifier, LightGBM)
-- 📈 Generates accurate 3-day AQI forecasts
-- 📊 Provides interactive visualizations and alerts
-- 🌐 Serves predictions via web dashboard
+- **5 ML Classification Models** (Random Forest, Gradient Boosting, LightGBM, Decision Tree, Sklearn GB)
+- **Hopsworks Feature Store** for centralized data management
+- **GitHub Actions** for fully automated CI/CD pipelines
+- **Streamlit Cloud** for interactive dashboard deployment
+- **FastAPI** for REST API endpoints
+- **OpenWeather API** for real-time air quality data
 
-## ✨ Key Features
-
-✅ **Hourly Data Pipeline**: Automated data collection from OpenWeather API every hour  
-✅ **Smart Duplicate Detection**: Compares with last 6 hours to avoid redundant storage  
-✅ **40+ Engineered Features**: Time-based, lag features, rolling statistics, interactions  
-✅ **3 ML Models**: Random Forest, HistGradientBoostingClassifier, LightGBM with auto best model selection  
-✅ **Daily Retraining**: Models retrain daily with cumulative historical data  
-✅ **3-Day Forecasts**: Hourly predictions aggregated to daily averages with ranges  
-✅ **Beautiful Dashboard**: Dark theme, animated sidebar, real-time visualizations  
-✅ **REST API**: FastAPI endpoints for programmatic access  
-✅ **100% Serverless**: No server management, fully automated CI/CD pipelines  
-✅ **Production-Ready**: Error handling, monitoring, logging, and alerts  
+The system **continuously and automatically**:
+- 📥 Collects hourly air quality data via OpenWeather API
+- 🔧 Engineers 40+ intelligent features (temporal, lags, rolling stats, interactions)
+- 🤖 Trains 5 classification models daily with NaN handling & imbalance management
+- 📈 Generates accurate 72-hour recursive forecasts aggregated to 3-day summaries
+- 🏆 Auto-selects best model based on F1 score
+- 📊 Provides real-time interactive visualizations with health alerts
+- 🔌 Serves predictions via REST API for integration
 
 ---
 
-## 📊 Model Performance and Selection Example
+## ✨ Key Features
 
-| Model | RMSE | MAE | R² Score | Status |
-|-------|------|-----|----------|--------|
-| **Random Forest** | 0.026 | 0.004 | 0.999 | ⭐ SELECTED |
-| **HistGradientBoostingClassifier** | 0.035 | 0.002 | 0.997 | Good |
-| **LightGBM** | 0.049 | 0.012 | 0.995 | Good |
+### 🤖 Machine Learning (5 Models)
+- ✅ **Random Forest Classifier**: 200 trees, balanced class weights
+- ✅ **Histogram Gradient Boosting**: 150 iterations with NaN handling
+- ✅ **LightGBM Classifier**: Fast gradient boosting, optimized for performance
+- ✅ **Decision Tree Classifier**: Interpretable baseline model
+- ✅ **Sklearn Gradient Boosting**: 150 iterations with SimpleImputer
+- ✅ **Auto Model Selection**: Selects best model by F1 score daily
+- ✅ **Class Imbalance Handling**: Stratified split + class_weight='balanced'
+- ✅ **NaN Value Handling**: SimpleImputer with median strategy
 
-*Performance metrics updated daily. Random Forest selected for best RMSE performance.*
+### 📊 Data Pipeline
+- ✅ **Hourly Data Collection**: Real-time OpenWeather API integration
+- ✅ **Smart Duplicate Detection**: Compares with last 6 hours
+- ✅ **42+ Feature Engineering**: Temporal, lag, rolling stats, interactions
+- ✅ **Historical Backfill**: Loads 6,650+ records (Jan-Oct 2025)
+- ✅ **Hopsworks Feature Store**: Centralized data with versioning
+- ✅ **Daily Retraining**: Automatic with cumulative historical data
+
+### 🎨 User Interface
+- ✅ **Beautiful Dashboard**: Dark theme with cyan accents, smooth animations
+- ✅ **3-Day Forecast Cards**: Color-coded AQI (Good→Very Poor) with alerts
+- ✅ **Interactive Charts**: Plotly-powered trend visualization
+- ✅ **Model Comparison**: Real-time F1, Accuracy, Precision, Recall metrics
+- ✅ **System Information**: Complete architecture details
+- ✅ **Responsive Design**: Desktop, tablet, and mobile support
+- ✅ **Smart Caching**: 1-hour cache for performance optimization
+
+### 🔌 API & Integration
+- ✅ **REST API**: FastAPI with Swagger documentation
+- ✅ **JSON Responses**: Structured prediction and metrics data
+- ✅ **CORS Enabled**: Cross-origin requests supported
+- ✅ **Multiple Endpoints**: `/predict`, `/models`, `/models/best`, `/status`, `/info`
+- ✅ **Error Handling**: Meaningful error messages and graceful failures
+- ✅ **Auto Documentation**: Interactive API explorer at `/docs`
+
+### 🚀 DevOps & Automation
+- ✅ **GitHub Actions CI/CD**: Hourly data + daily training fully automated
+- ✅ **100% Serverless**: No server management required
+- ✅ **Production-Ready**: Comprehensive error handling, logging, monitoring
+- ✅ **Git Integration**: Automatic commits after each pipeline run
+- ✅ **Model Versioning**: Full version control in Hopsworks
+- ✅ **Scheduled Execution**: Reliable cron-based automation
+
+---
+
+## 📈 Current Model Performance
+
+| Model | F1 Score | Accuracy | Precision | Recall | Status |
+|-------|----------|----------|-----------|--------|--------|
+| **Gradient Boosting** | **0.9985** | **0.9985** | **0.9985** | **0.9985** | 🥇 Best |
+| **LightGBM** | **0.9985** | **0.9985** | **0.9985** | **0.9985** | 🥇 Tied |
+| **Random Forest** | 0.9897 | 0.9897 | 0.9898 | 0.9897 | ✅ Excellent |
+| **Decision Tree** | 0.9904 | 0.9904 | 0.9905 | 0.9904 | ✅ Excellent |
+| **Sklearn GB** | 0.9871 | 0.9871 | 0.9872 | 0.9871 | ✅ Good |
+
+*Metrics updated daily. All 5 models trained on 6,790+ records with AQI categories (1-5).*
 
 ---
 
 ## 🏗️ System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Streamlit Cloud Dashboard                │
-│  https://multan-aqi.streamlit.app                           │
-│  ├─ 3-Day Forecast Cards    (AQI values & alerts)           │
-│  ├─ Model Comparison        (R², MAE, RMSE metrics)         │
-│  └─ Project Information     (Architecture & models)         │
-└──────────────────────┬──────────────────────────────────────┘
-                       │ (Reads predictions)
-                       ↓
-┌──────────────────────────────────────────────────────────────┐
-│              Hopsworks Feature Store                         │
-│  ├─ Raw Features (19): CO, NO2, O3, PM2.5, PM10, Temp, etc   │
-│  ├─ Engineered (40+): Time, lags, rolling stats, interact    │
-│  ├─ Model Registry: Trained models stored                    │
-│  └─ Predictions: 3-day forecast results                      │
-└──────────────┬──────────────────────────────────────────────-┘
-               │ (Store & fetch)
-        ┌──────┴──────┐
-        │             │
-        ↓             ↓
-┌──────────────┐  ┌──────────────────────┐
-│ Hourly       │  │ Daily Training       │
-│ Pipeline     │  │ Pipeline             │
-│              │  │                      │
-│ (every hour) │  │ (2 AM UTC/7 AM PKT)  │
-│              │  │                      │
-│ • Collect    │  │ • Train 3 models     │
-│   data       │  │ • Compare & select   │
-│ • Check      │  │   best (RMSE)        │
-│   duplicates │  │ • Register models    │
-│ • Engineer   │  │ • Generate forecasts │
-│   features   │  │ • Push to Hub        │
-│ • Upload     │  │                      │
-│              │  │                      │
-└──────────────┘  └──────────────────────┘
-        ↑                    ↑
-        └────────────────────┘
-            GitHub Actions
+┌─────────────────────────────────────────────────────────────────┐
+│                     Presentation Layer                          │
+├──────────────────────┬──────────────┬───────────────────────────┤
+│  Streamlit Cloud     │  FastAPI     │  Streamlit Local/Docker   │
+│  Dashboard           │  REST API    │  Development              │
+│  (Production)        │  (Optional)  │  (Testing)                │
+└──────────┬───────────┴──────┬───────┴──────────┬────────────────┘
+           │                  │                  │
+           └──────────────────┼──────────────────┘
+                              ↓
+        ┌──────────────────────────────────────────┐
+        │   Hopsworks Feature Store & Registry     │
+        │                                          │
+        │  ├─ Raw Features (19)                    │
+        │  │  - Pollutants, Weather, Temporal      │
+        │  │                                       │
+        │  ├─ Engineered Features (42+)            │
+        │  │  - Lags, Rolling Stats, Interactions  │
+        │  │                                       │
+        │  ├─ Model Registry (5 models)            │
+        │  │  - All versions with metrics          │
+        │  │                                       │
+        │  └─ Predictions (3-day forecast)         │
+        │     - Latest forecast results            │
+        └───────────┬──────────────────────────────┘
+                    ↑
+        ┌───────────┴────────────────┐
+        │                            │
+        ↓                            ↓
+    ┌──────────────┐         ┌──────────────────────┐
+    │  Hourly      │         │  Daily Training      │
+    │  Pipeline    │         │  Pipeline            │
+    │              │         │                      │
+    │  (Every Hour)│         │  (12:00 AM UTC)      │
+    │              │         │  (5:00 AM PKT)       │
+    │  • Collect   │         │                      │
+    │    data      │         │  • Load historical   │
+    │  • Check     │         │  • Handle NaN values │
+    │    duplicates│         │  • Train 5 models    │
+    │  • Engineer  │         │  • Evaluate metrics  │
+    │    42+       │         │  • Select best model │
+    │    features  │         │  • Register models   │
+    │  • Upload    │         │  • Generate forecasts│
+    │              │         │  • Save predictions  │
+    │  Duration:   │         │  • Push to GitHub    │
+    │  < 2 min     │         │                      │
+    │              │         │  Duration: 3-5 min   │
+    └──────────────┘         └──────────────────────┘
+        ↑                            ↑
+        └────────────────────────────┘
+             GitHub Actions
            (Fully Automated)
-            ↑
-            │ (OpenWeather API)
-            │
-    ┌───────────────┐
-    │ OpenWeather   │
-    │ API           │
-    │ (Real-time)   │
-    └───────────────┘
+             ↑
+             │
+        ┌─────────────────┐
+        │ OpenWeather API │
+        │  (Real-time)    │
+        │                 │
+        │ • Air Quality   │
+        │ • Weather Data  │
+        └─────────────────┘
 ```
 
 ---
 
 ## 🛠️ Tech Stack
 
-### **Machine Learning**
-- **scikit-learn**: Random Forest, preprocessing
-- **HistGradientBoostingClassifier**: Gradient boosting model
-- **LightGBM**: Fast gradient boosting
-- **pandas** & **numpy**: Data processing
-- **joblib**: Model serialization
+### Machine Learning & Data Science
+- **scikit-learn** (1.3+): Random Forest, preprocessing, metrics
+- **LightGBM** (4.0+): Fast gradient boosting classifier
+- **pandas** (2.0+): Data manipulation and analysis
+- **numpy** (1.24+): Numerical computations
+- **joblib**: Model persistence and serialization
 
-### **Feature Store & MLOps**
-- **Hopsworks**: Feature store, model registry, data versioning
+### MLOps & Feature Store
+- **Hopsworks** (4.7+): Feature store, model registry, versioning
 - **GitHub Actions**: CI/CD automation (hourly & daily)
 
-### **Web & API**
-- **Streamlit**: Interactive dashboard (dark theme, animations)
-- **FastAPI**: REST API for predictions
-- **Uvicorn**: ASGI server
+### Web & API
+- **Streamlit** (1.28+): Interactive dashboard with animations
+- **FastAPI** (0.104+): Modern REST API framework
+- **Uvicorn** (0.24+): ASGI server
+- **Plotly** (5.17+): Interactive data visualizations
+- **python-dotenv** (1.0+): Environment management
 
-### **Data Source**
+### Data Collection
 - **OpenWeather API**: Real-time weather & air quality data
-- **Python-dotenv**: Secure environment variable management
+- **requests**: HTTP client for API calls
 
-### **Infrastructure**
-- **Streamlit Cloud**: Dashboard deployment
-- **GitHub**: Code repository & CI/CD
+### Infrastructure & Deployment
+- **Streamlit Cloud**: Dashboard hosting (free tier)
+- **GitHub**: Repository & CI/CD platform
 - **Hopsworks Cloud**: Feature store & model registry
 
 ---
@@ -138,265 +197,265 @@ The system continuously:
 ## 📦 Installation & Setup
 
 ### Prerequisites
-- Python 3.10 or higher
+- Python 3.11 or higher
 - GitHub account (for CI/CD)
-- Hopsworks account (free tier available)
-- OpenWeather API key (free tier available)
+- Hopsworks account ([free tier](https://www.hopsworks.ai/))
+- OpenWeather API key ([free tier](https://openweathermap.org/api))
 
-### Local Development
+### Step 1: Clone Repository
 
 ```bash
-# Clone repository
 git clone https://github.com/saqibahmadsiddiqui/aqi-forecasting-system.git
 cd aqi-forecasting-system
-
-# Create virtual environment
-python -3.11 -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment variables
-cp .env
-# Edit .env with your API keys:
-# - HOPSWORKS_API_KEY
-# - OPENWEATHER_API_KEY
-# - HOPSWORKS_PROJECT_NAME
 ```
 
-### Environment Variables
+### Step 2: Create Virtual Environment
+
+```bash
+# Create
+python -m venv venv
+
+# Activate (Linux/Mac)
+source venv/bin/activate
+
+# Activate (Windows)
+venv\Scripts\activate
+```
+
+### Step 3: Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Step 4: Configure Environment Variables
 
 Create `.env` file in project root:
 
 ```
 # Hopsworks Configuration
-HOPSWORKS_API_KEY=your_hopsworks_api_key
-HOPSWORKS_PROJECT_NAME=aqi_forecasting
+HOPSWORKS_HOST=eu-west.cloud.hopsworks.ai
+HOPSWORKS_API_KEY=your_hopsworks_api_key_here
+HOPSWORKS_PROJECT_NAME=aqi_multan
+
+# Feature Group Settings
+FEATURE_GROUP_NAME=aqi_multan_features
+FEATURE_GROUP_VERSION=1
 
 # OpenWeather API
-OPENWEATHER_API_KEY=your_openweather_api_key
+OPENWEATHER_API_KEY=your_openweather_api_key_here
 
 # Location (Multan, Pakistan)
-LOCATION_LAT=30.1979793
-LOCATION_LON=71.4724978
-LOCATION_NAME=Multan
-
-# Timezone
+LAT=30.1979793
+LON=71.4724978
 TIMEZONE=Asia/Karachi
+```
+
+### Step 5: Verify Installation
+
+```bash
+python -c "import hopsworks; import streamlit; import lightgbm; print('All imports successful!')"
 ```
 
 ---
 
 ## 🎯 Usage Guide
 
-### 1. Initial Data Load (Run Once)
-
-```bash
-python src/setup/initial_data_load.py
-```
-
-This will:
-- Extract historical data from October 2025
-- Engineer 40+ features
-- Upload to Hopsworks Feature Store
-- Create initial feature view
-
-### 2. Train Models
-
-```bash
-python src/models/daily_training.py
-```
-
-Trains all 3 models and selects the best one based on RMSE.
-
-### 3. Generate Predictions
-
-```bash
-python src/prediction/predictor.py
-```
-
-Generates 3-day ahead forecasts using the best model.
-
-### 4. Run Dashboard
+### Option 1: Run Dashboard (Recommended for Users)
 
 ```bash
 streamlit run dashboard/app.py
 ```
 
-Visit: http://localhost:8501
+**Opens at**: http://localhost:8501
 
-**Dashboard Pages:**
-- **3-Day Forecast**: AQI predictions with categories and alerts
-- **Model Comparison**: Performance metrics for all models
-- **About**: Project information and feature details
+**Dashboard Sections**:
+- 🔮 **3-Day Forecast**: AQI predictions with color-coded alerts
+- 📊 **Model Comparison**: Performance metrics for all 5 models
+- ℹ️ **About**: System architecture and feature details
 
-### 5. Run API (Optional)
+### Option 2: Run REST API (For Developers)
 
 ```bash
-python api/main.py
+uvicorn api.main:app --reload
 ```
 
-Starts FastAPI server at http://localhost:8000
-- API Docs: http://localhost:8000/docs
-- Predictions: GET `/predict`
+**API Server at**: http://localhost:8000
 
+**Available Endpoints**:
+- `GET /` → Health check
+- `GET /health` → System status
+- `GET /predict` → Get 3-day predictions
+- `GET /models` → All models with metrics
+- `GET /models/best` → Best performing model
+- `GET /status` → System status details
+- `GET /info` → API information
+- `GET /docs` → Interactive API documentation
+
+### Option 3: Run Training Pipeline (Manual)
+
+```bash
+# Train all 5 models
+python src/models/daily_training.py
+
+# Generate forecasts
+python src/prediction/predictor.py
+```
 ---
 
 ## 🔄 Automated Pipelines
 
-### Hourly Pipeline (GitHub Actions)
+### Hourly Data Collection Pipeline
 
-Runs **every hour at :00** UTC:
+**Trigger**: Every hour at :00 UTC (7:00, 8:00, 9:00 AM PKT, etc.)
 
 ```yaml
-Schedule: 0 * * * *
+Workflow: .github/workflows/hourly_data_pipeline.yml
 
 Tasks:
-  1. Fetch current air quality data from OpenWeather
-  2. Check for duplicates (last 6 hours)
-  3. Engineer features (42+ calculations)
+  1. Fetch real-time air quality data from OpenWeather API
+  2. Engineer 40+ features (temporal, lags, rolling statistics, interactions)
+  3. Check for duplicates in last 6 hours to avoid redundancy
   4. Upload to Hopsworks Feature Store
-  5. Commit results to GitHub
+  5. Commit changes to GitHub
+  
+Duration: < 2 minutes per hour
 ```
 
-**Purpose**: Keep feature store updated with latest data for daily training.
+### Daily Training & Prediction Pipeline
 
-### Daily Pipeline (GitHub Actions)
-
-Runs **daily at 12 AM UTC** (5 AM PKT):
+**Trigger**: Daily at 12:00 AM UTC (5:00 AM PKT)
 
 ```yaml
-Schedule: 0 0 * * *
+Workflow: .github/workflows/daily_training_pipeline.yml
 
 Tasks:
-  1. Load all data from Feature Store
-  2. Train 3 models (RF, HistGradientBoostingClassifier, LightGBM)
-  3. Evaluate performance (RMSE, MAE, R²)
-  4. Select best model (lowest RMSE)
-  5. Register in Hopsworks Model Registry
-  6. Generate 3-day predictions
-  7. Save predictions to CSV
-  8. Commit to GitHub
-  9. Push to Feature Store
+  1. Load 6,500+ historical records from Feature Store
+  2. Handle missing values (NaN imputation with SimpleImputer)
+  3. Check class distribution and handle imbalance
+  4. Split data (80% train, 20% test with stratification)
+  5. Train 5 classification models:
+     ├─ Random Forest Classifier (200 trees)
+     ├─ Histogram Gradient Boosting Classifier (150 iterations)
+     ├─ LightGBM Classifier (150 trees, max_depth=10)
+     ├─ Decision Tree Classifier (max_depth=15)
+     └─ Sklearn Gradient Boosting Classifier (150 iterations)
+  6. Evaluate all models (F1, Accuracy, Precision, Recall)
+  7. Select best model by F1 score
+  8. Register all models in Hopsworks Model Registry
+  9. Generate 72-hour recursive forecasts with feature updates
+  10. Aggregate to 3-day summaries with min/max ranges
+  11. Save predictions to CSV files
+  12. Commit results and push to GitHub
+  
+Duration: 3-5 minutes
 ```
-
-**Purpose**: Retrain models with new data and generate forecasts.
 
 ---
 
-## 📈 Features Engineering
+## 📈 Feature Engineering Pipeline
 
 ### Raw Features (19)
-- **Pollutants**: CO, NO, NO2, O3, SO2, PM2.5, PM10, NH3 (8 features)
-- **Weather**: Temperature, Humidity, Pressure, Wind Speed, Cloud Cover (5 features)
-- **Target**: AQI (1-5 scale) (1 feature)
-- **Temporal**: Date, Time (2 features)
-- **Metadata**: Latitude, Longitude, Elevation (3 features)
+- **Pollutants** (8): CO, NO, NO2, O3, SO2, PM2.5, PM10, NH3
+- **Weather** (5): Temperature, Humidity, Pressure, Wind Speed, Cloud Cover
+- **Target** (1): AQI (1-5 scale)
+- **Temporal** (2): Date, Time
+- **Metadata** (3): Latitude, Longitude, Elevation
 
 ### Engineered Features (40+)
 
-**Time-based Features** (8):
-- Hour of day (cyclical: sin/cos)
-- Day of week (cyclical: sin/cos)
-- Month (cyclical: sin/cos)
-- Is weekend
-
-**Lag Features** (24):
-- AQI lags: t-1, t-3, t-6, t-12, t-24, t-48, t-72 hours
-- PM2.5 lags: t-1, t-3, t-6, t-12, t-24, t-48, t-72
-- Temperature lag: t-1
-- Humidity lag: t-1
-
-**Rolling Statistics** (12):
-- AQI mean/std over 3h, 6h, 12h, 24h windows
-- PM2.5 mean/std over 3h, 6h, 12h, 24h windows
-
-**Rate of Change** (4):
-- AQI change over 1h, 3h, 24h
-- PM2.5 change over 1h
-
-**Min/Max** (2):
-- 24-hour rolling min/max
-
-**Interactions** (3):
-- PM2.5 × Humidity
-- PM2.5 × Temperature
-- PM2.5 × Wind Speed
-
-**Total**: 42+ features for training
+| Category | Features | Count |
+|----------|----------|-------|
+| **Temporal** | hour_sin/cos, day_of_week_sin/cos, month_sin/cos, is_weekend | 7 |
+| **Lag Features** | aqi_lag_{1,3,6,12,24,48}h, pm2_5_lag_{1,3,6,24}h, pm10_lag_{1,3,24}h | 14 |
+| **Rolling Mean** | aqi_rolling_mean_{3,6,12,24}h, pm2_5_rolling_mean_{6,24}h | 6 |
+| **Rolling Std** | aqi_rolling_std_{6,24}h | 2 |
+| **Min/Max** | aqi_rolling_min/max_24h | 2 |
+| **Change** | aqi_change_24h, pm2_5_change_24h | 2 |
+| **Interactions** | pm2_5_x_wind_speed | 1 |
+| **Raw** | All original features | 19 |
+| | **TOTAL** | **42+** |
 
 ---
 
-## 🎨 Dashboard Features
+## 🎨 Dashboard Interface
 
-### 3-Day Forecast Cards
-- Daily average AQI value
-- Category: Good, Fair, Moderate, Poor, Very Poor
-- Color-coded backgrounds
-- Min-Max range display
-- Status alerts (SAFE/ALERT)
+### 3-Day Forecast Page
+- Interactive forecast cards with AQI values (1-5)
+- Color-coded categories: Good 🟢 → Very Poor 🔴
+- Min-Max ranges for each day
+- Health alerts and warnings
+- Animated trend chart with Plotly
+- Best model information
 
-### Trend Visualization
-- Interactive line chart
-- AQI trend over 3 days
-- Min/Max confidence bands
-- Hover details
+### Model Comparison Page
+- Best model performance highlighted
+- Individual metrics for all 5 models (F1, Accuracy, Precision, Recall)
+- Interactive comparison bar chart
+- Detailed metrics table
+- Model version information
 
-### Model Comparison
-- Performance table for all 3 models
-- R² Score, MAE, RMSE metrics
-- Best model highlighted
-- Bar chart comparison
+### About Page
+- System architecture explanation
+- Data pipeline overview
+- ML models description
+- Feature engineering details
+- AQI categories guide
+- Location and update frequency information
 
-### Navigation
-- Animated sidebar with smooth transitions
-- Dark theme with cyan accents
-- Responsive design (mobile-friendly)
-- Real-time updates (2-minute cache)
-
-### Footer
-- Created by Saqib Ahmad Siddiqui
-- Last updated timestamp
-- System status indicator
+### UI/UX Features
+- ✅ Dark theme with cyan accents
+- ✅ Smooth sidebar animations
+- ✅ Real-time PKT timezone display
+- ✅ Responsive mobile design
+- ✅ System status indicator
+- ✅ 1-hour auto-cache
+- ✅ Manual refresh capability
 
 ---
 
-## 📡 API Endpoints
+## 🔌 API Usage Examples
 
-### Health & Status
-```
-GET /health
-Response: {"status": "ok", "timestamp": "2025-02-11T10:30:00Z"}
-```
+### Python Client
 
-### Predictions
-```
-GET /predict
-Response: {
-  "date": "2025-02-11",
-  "aqi": 2.5,
-  "category": "Fair",
-  "min_aqi": 2.1,
-  "max_aqi": 2.9
-}
-```
+```python
+import requests
 
-### Model Comparison
-```
-GET /models
-Response: [
-  {"model": "Random Forest", "r2": 0.999, "mae": 0.004, "rmse": 0.026},
-  {"model": "HistGradientBoostingClassifier", "r2": 0.997, "mae": 0.002, "rmse": 0.035},
-  {"model": "LightGBM", "r2": 0.995, "mae": 0.012, "rmse": 0.049}
-]
+# Get predictions
+response = requests.get("http://localhost:8000/predict")
+predictions = response.json()
+
+for pred in predictions:
+    print(f"{pred['date']}: {pred['category']} (AQI: {pred['average_aqi']})")
+
+# Get best model
+response = requests.get("http://localhost:8000/models/best")
+best_model = response.json()
+print(f"Best Model: {best_model['model']} (F1: {best_model['f1_score']:.4f})")
 ```
 
-### API Documentation
+### JavaScript/React
+
+```javascript
+// Fetch predictions
+fetch('http://localhost:8000/predict')
+  .then(res => res.json())
+  .then(predictions => {
+    console.log(predictions);
+  });
 ```
-GET /docs
-Interactive API documentation (Swagger UI)
+
+### cURL
+
+```bash
+# Get predictions
+curl http://localhost:8000/predict | jq
+
+# Get best model
+curl http://localhost:8000/models/best | jq
+
+# Check system status
+curl http://localhost:8000/status | jq
 ```
 
 ---
@@ -406,55 +465,42 @@ Interactive API documentation (Swagger UI)
 ```
 aqi-forecasting-system/
 ├── .github/
-│   └── workflows/                    # CI/CD pipelines
-│       ├── hourly_data_pipeline.yml  # Hourly data collection
-│       └── daily_training_pipeline.yml # Daily model training
-│
-├── api/                              # FastAPI application
-│   └── main.py                       # API server
-│
-├── dashboard/                        # Streamlit application
-│   └── app.py                        # Main dashboard
-│
-├── data/                             # Data storage
-│   ├── raw/                          # Raw data from APIs
-│   ├── interim/                      # Intermediate processing
-│   └── processed/                    # Final predictions & CSVs
-│
-├── models/                           # Saved ML models
-│   ├── random_forest.joblib
-│   ├── gradien_boosting.joblib
-│   └── lightgbm.joblib
-│
-├── notebooks/                        # Jupyter notebooks (EDA)
-│   └── exploratory_data_analysis.ipynb
-│
-├── src/                              # Source code
+│   └── workflows/
+│       ├── daily_training_pipeline.yml
+│       └── hourly_data_pipeline.yml
+├── api/
+│   └── main.py
+├── dashboard/
+│   └── app.py
+├── src/
 │   ├── config/
-│   │   └── config.py                 # Configuration & constants
-│   ├── ingestion/
-│   │   └── hourly_data_pipeline.py         # OpenWeather API integration
+│   │   └── config.py                        # Configuration & constants
 │   ├── models/
-│   │   └── daily_training.py               # Model training
+│   │   └── daily_training.py                # 5 model training script
 │   ├── prediction/
-│   │   └── predictor.py              # Prediction pipeline
-│   ├── features/
+│   │   └── predictor.py                     # 72-hour forecasting
 │   └── setup/
-│       |── initial_data_load.py      # Initial data load
-|       |── debug_upload.py      # Check data features
-|       └── verify_upload.py      # Check data
+│       ├── historical_data.py               # Historical data backfill
+│       ├── initial_data_load.py             # Initial data backfill
+│       ├── debug_upload.py                  # Get feature store schema
+│       └── verify_upload.py                 # Get data information
 │
-├── .env                              # Environment variables (local)
-├── .gitignore                        # Git ignore rules
-├── requirements.txt                  # Python dependencies (15+)
-└── README.md                         # This file
+├── data/
+│   └── processed/                           # Final predictions
+│       ├── latest_predictions.csv           # 3-day forecast
+│       └── model_comparison.csv             # Model metrics
+│
+├── .env                                     # Environment variables
+├── .gitignore                               # Git ignore rules
+├── requirements.txt                         # Python dependencies
+└── README.md                                # This file
 ```
 
 ---
 
 ## 🚀 Deployment Guide
 
-### Deploy to Streamlit Cloud
+### Deploy Dashboard to Streamlit Cloud
 
 1. **Push to GitHub**
    ```bash
@@ -464,148 +510,241 @@ aqi-forecasting-system/
    ```
 
 2. **Create Streamlit Cloud App**
-   - Go to https://share.streamlit.io
+   - Visit https://share.streamlit.io
+   - Sign in with GitHub
    - Click "New app"
    - Select repository: `aqi-forecasting-system`
-   - Select branch: `main`
-   - Set file: `dashboard/app.py`
+   - Select main file: `dashboard/app.py`
 
 3. **Add Secrets**
-   - In Streamlit Cloud: Settings → Secrets
-   - Add:
+   - Click Settings (gear icon)
+   - Go to Secrets
+   - Add environment variables:
      ```toml
-     hopsworks_api_key = "..."
-     hopsworks_project_name = "..."
-     openweather_api_key = "..."
+     HOPSWORKS_HOST = "eu-west.cloud.hopsworks.ai"
+     HOPSWORKS_API_KEY = "your_key_here"
+     HOPSWORKS_PROJECT_NAME = "AQI_MULTAN"
+     FEATURE_GROUP_NAME = "aqi_multan_features"
+     FEATURE_GROUP_VERSION = 1
+     OPENWEATHER_API_KEY = "your_key_here"
+     LAT = "30.1979793"
+     LON = "71.4724978"
+     TIMEZONE = "Asia/Karachi"
      ```
 
-4. **Wait for Deployment**
-   - First build: 8-12 minutes
+4. **Deploy**
+   - First deploy: 8-12 minutes
    - Subsequent: 3-5 minutes
+   - Your dashboard will be live!
 
-Your dashboard will be live at: https://multan-aqi.streamlit.app
+### Deploy API to Cloud Run
+
+```bash
+# Create Dockerfile
+cat > Dockerfile << 'EOF'
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY src/ ./src/
+ENV PYTHONUNBUFFERED=1
+CMD ["uvicorn", "api.main:app", "--reload"]
+EOF
+
+# Deploy to Google Cloud Run
+gcloud run deploy aqi-api \
+  --source . \
+  --platform managed \
+  --region us-central1 \
+  --set-env-vars HOPSWORKS_API_KEY=your_key
+```
 
 ---
 
-## 🔄 CI/CD Pipeline Configuration
+## 🔄 GitHub Actions Configuration
 
-### GitHub Secrets Required
+### Required Secrets
+
+Navigate to: **Settings → Secrets and variables → Actions**
 
 1. **HOPSWORKS_API_KEY**
-   - Get from: Hopsworks → Settings → API Keys
+   - From: Hopsworks → Account Settings → API Keys
 
-2. **OPENWEATHER_API_KEY**
-   - Get from: OpenWeather → API Keys
+2. **HOPSWORKS_HOST**
+   - Value: `eu-west.cloud.hopsworks.ai`
 
-### Workflow Files
+3. **HOPSWORKS_PROJECT_NAME**
+   - Your Hopsworks project name
 
-Both workflows automatically configured to:
-- Use secrets from GitHub
-- Run on schedule (hourly & daily)
-- Commit results to repository
-- Handle errors gracefully
+4. **OPENWEATHER_API_KEY**
+   - From: OpenWeather → API Keys
 
-No additional setup needed!
+### Workflows Included
+
+Both workflows are fully automated:
+- ✅ Run on schedule (hourly & daily)
+- ✅ Use GitHub Secrets securely
+- ✅ Handle errors gracefully
+- ✅ Commit results automatically
+- ✅ Send failure notifications
 
 ---
 
-## 📈 Performance Metrics
+## 📈 Performance & Benchmarks
 
-### Model Training Time
-- First training: ~2-3 minutes
-- Daily retraining: ~3-5 minutes
-- GitHub Actions execution: 2-5 minutes total
+### Training Performance
+- **Initial Training**: 5-10 minutes (5 models)
+- **Daily Retraining**: 3-5 minutes
+- **Feature Engineering**: 1-2 minutes per 1000 records
+- **Prediction Generation**: 30 seconds
 
-### Prediction Latency
-- Cold start: ~2 seconds
-- Subsequent: <500ms
-- API response: <1 second
+### API Performance
+- **Prediction Endpoint**: <500ms
+- **Models Endpoint**: <200ms
+- **Health Check**: <100ms
+- **Cold Start**: ~2 seconds
 
 ### Data Pipeline
-- Hourly collection: ~30 seconds
-- Feature engineering: ~20 seconds
-- Upload to Feature Store: ~10 seconds
-- Total: <2 minutes per hour
+- **Hourly Collection**: ~2 minutes total
+- **Feature Engineering**: ~20 seconds
+- **Upload to Hopsworks**: ~10 seconds
+- **Total per hour**: <2 minutes
 
 ### Dashboard Performance
-- Page load: 2-5 seconds
-- Chart rendering: <1 second
-- Data refresh: Every 2 minutes (cache)
+- **Page Load**: 2-3 seconds
+- **Chart Rendering**: <1 second
+- **Data Refresh**: Every hour (cached)
+- **Mobile Load**: 3-5 seconds
+
+---
+
+## 🐛 Troubleshooting
+
+### Dashboard Shows "No Predictions"
+**Solution**: Run the prediction pipeline first
+```bash
+python src/models/daily_training.py
+python src/prediction/predictor.py
+```
+
+### Hopsworks Connection Error
+**Check**:
+1. API key is valid
+2. Project name is correct
+3. Internet connection is active
+
+**Debug**:
+```bash
+python -c "from src.prediction.predictor import AQIPredictor; \
+           p = AQIPredictor(); p.connect_hopsworks(); print('✅ Connected!')"
+```
+
+### OpenWeather API Fails
+**Check**:
+1. API key is valid
+2. Rate limit (free: 1000 calls/day)
+3. Coordinates are correct
+
+**Debug**:
+```bash
+curl "https://api.openweathermap.org/data/2.5/air_pollution?lat=30.1979&lon=71.4724&appid=YOUR_KEY"
+```
+
+### NaN Values in Training
+**Solution**: Already handled with SimpleImputer (median strategy)
+
+### Class Imbalance Warning
+**Solution**: Handled with stratified split + class_weight='balanced'
+
+---
+
+## 📚 Documentation Files
+
+Comprehensive guides available:
+
+- **README.md** - Complete project overview
+- **Project Report.pdf** - Detailed documentation
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please:
+Contributions are welcome! Areas for enhancement:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-Areas for contribution:
-- Additional ML models (LSTM, Logistic Regression etc)
+- Additional ML models (LSTM, XGBoost, Logistic Regression)
 - More engineered features
-- Improved API endpoints
-- Dashboard enhancements
+- Real-time notifications
+- Mobile app version
+- Multi-city support
+- Additional visualizations
 - Documentation improvements
 
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see LICENSE file for details.
+**Steps**:
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/YourFeature`
+3. Commit changes: `git commit -m 'Add YourFeature'`
+4. Push to branch: `git push origin feature/YourFeature`
+5. Open Pull Request
 
 ---
 
 ## 👨‍💻 Author
 
 **Saqib Ahmad Siddiqui**
-- GitHub: [@saqibahmadsiddiqui](https://github.com/saqibahmadsiddiqui)
-- Email: saqibahmad2004@gmail.com
-- LinkedIn: [Profile](https://linkedin.com/in/saqib-ahmad-siddiqui)
+- 🔗 **GitHub**: [@saqibahmadsiddiqui](https://github.com/saqibahmadsiddiqui)
+- 📧 **Email**: saqibahmad2004@gmail.com
+- 💼 **LinkedIn**: [saqib-ahmad-siddiqui](https://linkedin.com/in/saqib-ahmad-siddiqui)
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **OpenWeather API**: Real-time weather and air quality data
-- **Hopsworks**: Feature store and ML ops platform
-- **Streamlit**: Interactive dashboard framework
-- **GitHub Actions**: CI/CD automation
-- **scikit-learn, LightGBM**: ML libraries
-
----
-
-## 📚 Documentation
-
-For detailed documentation, see:
-
-- [Setup Guide](docs/Report)
-
----
-
-## 🎯 Roadmap
-
-### Current (v1.0)
-- ✅ 3-day AQI forecasting
-- ✅ 3 ML models with auto-selection
-- ✅ Streamlit dashboard
-- ✅ REST API
-- ✅ Hourly & daily pipelines
+- **OpenWeather API** - Real-time weather and air quality data
+- **Hopsworks** - Feature store and MLOps platform
+- **Streamlit** - Interactive dashboard framework
+- **FastAPI** - Modern Python web framework
+- **GitHub Actions** - CI/CD automation
+- **scikit-learn, LightGBM** - Machine learning libraries
 
 ---
 
 ## 📞 Support
 
-For issues and questions:
+For issues, questions, or suggestions:
+
 - **GitHub Issues**: [Report bugs](https://github.com/saqibahmadsiddiqui/aqi-forecasting-system/issues)
 - **Email**: saqibahmad2004@gmail.com
 - **Dashboard**: https://multan-aqi.streamlit.app
+- **Documentation**: See docs folder
 
 ---
 
-**Last Updated**: February 2025  
+## 🎯 Roadmap
+
+### ✅ Completed (v1.0)
+- 5 ML classification models with auto-selection
+- 40+ engineered features
+- 72-hour recursive forecasting
+- Streamlit interactive dashboard
+- FastAPI REST endpoints
+- GitHub Actions CI/CD
+- Hopsworks feature store integration
+- Historical data backfill (6,650+ records)
+- NaN handling with SimpleImputer
+- Class imbalance handling
+
+### 📋 Planned (v2.0)
+- LSTM/RNN models for temporal patterns
+- Real-time mobile notifications
+- Multi-city support
+- Advanced visualization dashboards
+- Model explainability (SHAP)
+- A/B testing framework
+- Ensemble predictions
+
+---
+
+**Status**: ✅ **Production Ready**  
+**Last Updated**: February 2026  
 **Version**: 1.0  
-**Status**: Active & Maintained
+**Maintained**: Yes

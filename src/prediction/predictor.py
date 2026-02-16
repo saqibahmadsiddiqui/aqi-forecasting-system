@@ -34,7 +34,8 @@ class AQIPredictor:
         print("Connected to Hopsworks")
         
     def load_latest_models(self):
-        print("\nLoading the 5 Classification Models...")
+        """Load the latest versions of all 5 models from registry"""
+        print("\nLoading the LATEST 5 Classification Models...")
         
         registry_names = {
             "random_forest": "aqi_random_forest",
@@ -51,7 +52,7 @@ class AQIPredictor:
                 versions = self.mr.get_models(registry_name)
                 
                 if not versions:
-                    print(f"   No versions found for {registry_name}")
+                    print(f"    No versions found for {registry_name}")
                     continue
                 
                 latest_model = sorted(versions, key=lambda m: m.version, reverse=True)[0]
@@ -85,6 +86,7 @@ class AQIPredictor:
         print(f"\nBest Model Selected: {self.best_model_name} (F1: {scores[self.best_model_name]:.4f})")
     
     def get_latest_features(self):
+        """Fetch latest feature data from online feature store"""
         print("\nFetching feature context from Online Feature Store...")
         fg = self.fs.get_feature_group(name=FEATURE_GROUP_NAME, version=FEATURE_GROUP_VERSION)
         df = fg.read(online=True).sort_values('datetime')
@@ -96,6 +98,7 @@ class AQIPredictor:
         return df
     
     def predict_next_3_days(self):
+        """Generate 72-hour recursive forecast with 24-hour aggregation"""
         print("\n" + "="*70)
         print("GENERATING 72-HOUR RECURSIVE FORECAST")
         print("="*70)
@@ -120,6 +123,7 @@ class AQIPredictor:
             new_row = history.iloc[-1].copy()
             new_row['datetime'] = current_dt
             
+            # Update cyclical time features
             new_row['hour_sin'] = np.sin(2 * np.pi * current_dt.hour / 24)
             new_row['hour_cos'] = np.cos(2 * np.pi * current_dt.hour / 24)
             new_row['day_of_week_sin'] = np.sin(2 * np.pi * current_dt.weekday() / 7)
@@ -128,12 +132,14 @@ class AQIPredictor:
             new_row['month_cos'] = np.cos(2 * np.pi * current_dt.month / 12)
             new_row['is_weekend'] = 1 if current_dt.weekday() >= 5 else 0
             
+            # Update lag features
             lags = [1, 3, 6, 12, 24, 48]
             for lag in lags:
                 col = f'aqi_lag_{lag}h'
                 if col in new_row.index and lag <= len(history):
                     new_row[col] = history.iloc[-lag]['aqi']
             
+            # Update rolling features
             windows = [3, 6, 12, 24]
             for w in windows:
                 col = f'aqi_rolling_mean_{w}h'
@@ -164,6 +170,7 @@ class AQIPredictor:
             if col in new_row.index:
                 new_row[col] = history.iloc[-1]['pm2_5'] * history.iloc[-1]['wind_speed']
             
+            # Predict
             X = pd.DataFrame([new_row[feature_cols]])
             pred_class = self.models[self.best_model_name].predict(X)[0]
             
@@ -178,6 +185,7 @@ class AQIPredictor:
             if hour_offset % 24 == 0:
                 print(f"   Predicted {hour_offset} hours")
         
+        # Aggregate into 3 daily predictions
         df_hourly = pd.DataFrame(hourly_predictions)
         df_hourly['datetime'] = pd.to_datetime(df_hourly['datetime'])
         
@@ -210,6 +218,7 @@ class AQIPredictor:
         return final_predictions
     
     def _get_label(self, aqi):
+        """Convert AQI (1-5) to category label"""
         mapping = {
             1: '🟢 Good',
             2: '🟡 Fair',
@@ -256,17 +265,17 @@ class AQIPredictor:
             self.load_latest_models()
             predictions = self.predict_next_3_days()
             comparison = self.get_model_comparison()
+            
             PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+            
             df_pred = pd.DataFrame(predictions)
             df_pred.to_csv(PROCESSED_DATA_DIR / 'latest_predictions.csv', index=False)
             print(f"\nSaved predictions to: {PROCESSED_DATA_DIR / 'latest_predictions.csv'}")
             
-            # Save model comparison
             df_comp = pd.DataFrame(comparison)
             df_comp.to_csv(PROCESSED_DATA_DIR / 'model_comparison.csv', index=False)
             print(f"Saved model comparison to: {PROCESSED_DATA_DIR / 'model_comparison.csv'}")
             
-            # Print summary
             print("\n" + "="*80)
             print("PREDICTION PIPELINE COMPLETE")
             print("="*80)
