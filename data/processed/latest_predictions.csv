@@ -1,4 +1,4 @@
 date,day_name,average_aqi,min_aqi,max_aqi,category,warning,timestamp
-2026-03-03,Tuesday,5,5,5,🔴 Very Poor,⚠️  HAZARDOUS! Avoid all outdoor exertion.,2026-03-03 02:37:50
-2026-03-04,Wednesday,5,5,5,🔴 Very Poor,⚠️  HAZARDOUS! Avoid all outdoor exertion.,2026-03-03 02:37:50
-2026-03-05,Thursday,5,5,5,🔴 Very Poor,⚠️  HAZARDOUS! Avoid all outdoor exertion.,2026-03-03 02:37:50
+2026-03-04,Wednesday,4,4,4,🔴 Poor,"⚠️  POOR! Limit outdoor exposure, especially for sensitive groups.",2026-03-04 02:30:02
+2026-03-05,Thursday,4,4,4,🔴 Poor,"⚠️  POOR! Limit outdoor exposure, especially for sensitive groups.",2026-03-04 02:30:02
+2026-03-06,Friday,4,4,4,🔴 Poor,"⚠️  POOR! Limit outdoor exposure, especially for sensitive groups.",2026-03-04 02:30:02
