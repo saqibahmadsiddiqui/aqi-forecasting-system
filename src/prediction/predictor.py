@@ -11,6 +11,7 @@ from sklearn.impute import SimpleImputer
 sys.path.append(str(Path(__file__).parent.parent.parent))
 from src.config.config import *
 
+
 class AQIPredictor:
     def __init__(self):
         self.project = None
@@ -19,7 +20,7 @@ class AQIPredictor:
         self.models = {}
         self.model_metrics = {}
         self.best_model_name = None
-        self.imputer = None  # FIX 3: imputer now lives on the predictor
+        self.imputer = None
 
         self.api_key = HOPSWORKS_API_KEY
         self.project_name = HOPSWORKS_PROJECT_NAME
@@ -36,7 +37,6 @@ class AQIPredictor:
         print("Connected to Hopsworks")
 
     def load_latest_models(self):
-        """Load the latest versions of all 5 models from registry"""
         print("\nLoading the LATEST 5 Classification Models...")
 
         registry_names = {
@@ -88,7 +88,6 @@ class AQIPredictor:
         print(f"\nBest Model Selected: {self.best_model_name} (F1: {scores[self.best_model_name]:.4f})")
 
     def get_latest_features(self):
-        """Fetch latest feature data from online feature store"""
         print("\nFetching feature context from Online Feature Store...")
         fg = self.fs.get_feature_group(name=FEATURE_GROUP_NAME, version=FEATURE_GROUP_VERSION)
         df = fg.read(online=True).sort_values('datetime')
@@ -100,48 +99,39 @@ class AQIPredictor:
         return df
 
     def predict_next_3_days(self):
-        """Generate 72-hour recursive forecast with 24-hour aggregation"""
         print("\n" + "="*70)
         print("GENERATING 72-HOUR RECURSIVE FORECAST")
         print("="*70)
 
         raw_history = self.get_latest_features().tail(120).copy().reset_index(drop=True)
 
-        # Exclude non-feature columns
         all_feature_cols = [c for c in raw_history.columns
                             if c not in ['datetime', 'timestamp', 'aqi']]
 
-        # Drop columns that are entirely NaN â€” imputer cannot handle them and
-        # they carry no signal (e.g. aqi_lag_48h never populated in feature store)
-        non_null_cols = [c for c in all_feature_cols
-                         if raw_history[c].notna().any()]
-        dropped = set(all_feature_cols) - set(non_null_cols)
+        # Drop columns that are entirely NaN before fitting the imputer
+        feature_cols = [c for c in all_feature_cols if raw_history[c].notna().any()]
+        dropped = set(all_feature_cols) - set(feature_cols)
         if dropped:
-            print(f"   Dropping all-NaN feature columns: {sorted(dropped)}")
-        feature_cols = non_null_cols
+            print(f"   Dropping all-NaN columns: {sorted(dropped)}")
 
-        # Fit imputer and assign back using loc to guarantee shape alignment
+        # Fit imputer and assign back column by column to avoid shape mismatch
         self.imputer = SimpleImputer(strategy='median')
-        imputed_array = self.imputer.fit_transform(raw_history[feature_cols])
-        raw_history.loc[:, feature_cols] = imputed_array
+        imputed_values = self.imputer.fit_transform(raw_history[feature_cols])
+        for i, col in enumerate(feature_cols):
+            raw_history[col] = imputed_values[:, i]
 
         last_dt = raw_history['datetime'].max()
-        pkt = pytz.timezone(TIMEZONE)
 
         print(f"   Starting from: {last_dt}")
         print(f"   Prediction window: 72 hours (3 days)")
         print(f"   Features used: {len(feature_cols)}")
 
-        # FIX 1 + FIX 4: Keep a clean working copy; track predicted AQI values separately
-        # so lag/rolling windows always read correctly updated values.
         history = raw_history.copy()
         hourly_predictions = []
 
         for hour_offset in range(1, 73):
             current_dt = last_dt + timedelta(hours=hour_offset)
 
-            # FIX 1: Build new_row from the last row's *features* only, then
-            # overwrite every derived feature below â€” nothing is blindly inherited.
             new_row = history.iloc[-1].copy()
             new_row['datetime'] = current_dt
 
@@ -154,56 +144,47 @@ class AQIPredictor:
             new_row['month_cos'] = np.cos(2 * np.pi * current_dt.month / 12)
             new_row['is_weekend'] = 1 if current_dt.weekday() >= 5 else 0
 
-            # FIX 2: Read lag values from history['aqi'] which now contains properly
-            # updated predicted values after each iteration (set at end of loop).
+            # Update lag features from correctly maintained history
             lags = [1, 3, 6, 12, 24, 48]
             for lag in lags:
                 col = f'aqi_lag_{lag}h'
                 if col in new_row.index and lag <= len(history):
                     new_row[col] = history['aqi'].iloc[-lag]
 
-            # Rolling stats over the correctly updated aqi column
+            # Update rolling features
             windows = [3, 6, 12, 24]
             for w in windows:
                 col = f'aqi_rolling_mean_{w}h'
                 if col in new_row.index:
                     new_row[col] = history['aqi'].tail(w).mean()
 
-            col = 'aqi_rolling_std_6h'
-            if col in new_row.index:
-                new_row[col] = history['aqi'].tail(6).std()
+            if 'aqi_rolling_std_6h' in new_row.index:
+                new_row['aqi_rolling_std_6h'] = history['aqi'].tail(6).std()
 
-            col = 'aqi_rolling_std_24h'
-            if col in new_row.index:
-                new_row[col] = history['aqi'].tail(24).std()
+            if 'aqi_rolling_std_24h' in new_row.index:
+                new_row['aqi_rolling_std_24h'] = history['aqi'].tail(24).std()
 
-            col = 'pm2_5_rolling_mean_6h'
-            if col in new_row.index:
-                new_row[col] = history['pm2_5'].tail(6).mean()
+            if 'pm2_5_rolling_mean_6h' in new_row.index:
+                new_row['pm2_5_rolling_mean_6h'] = history['pm2_5'].tail(6).mean()
 
-            col = 'pm2_5_rolling_mean_24h'
-            if col in new_row.index:
-                new_row[col] = history['pm2_5'].tail(24).mean()
+            if 'pm2_5_rolling_mean_24h' in new_row.index:
+                new_row['pm2_5_rolling_mean_24h'] = history['pm2_5'].tail(24).mean()
 
-            col = 'aqi_change_24h'
-            if col in new_row.index and len(history) >= 24:
-                new_row[col] = history['aqi'].iloc[-1] - history['aqi'].iloc[-24]
+            if 'aqi_change_24h' in new_row.index and len(history) >= 24:
+                new_row['aqi_change_24h'] = history['aqi'].iloc[-1] - history['aqi'].iloc[-24]
 
-            col = 'pm2_5_x_wind_speed'
-            if col in new_row.index:
-                new_row[col] = history['pm2_5'].iloc[-1] * history['wind_speed'].iloc[-1]
+            if 'pm2_5_x_wind_speed' in new_row.index:
+                new_row['pm2_5_x_wind_speed'] = history['pm2_5'].iloc[-1] * history['wind_speed'].iloc[-1]
 
-            # FIX 3: Apply imputer to handle any remaining NaNs before prediction
+            # Build feature vector, impute any remaining NaNs
             X_raw = pd.DataFrame([new_row[feature_cols]])
-            X = pd.DataFrame(
-                self.imputer.transform(X_raw),
-                columns=feature_cols
-            )
+            imputed_x = self.imputer.transform(X_raw)
+            X = pd.DataFrame(imputed_x, columns=feature_cols)
 
             pred_class = int(self.models[self.best_model_name].predict(X)[0])
             pred_class = max(1, min(5, pred_class))
 
-            # FIX 2: Set aqi on new_row BEFORE appending so subsequent lag reads are correct
+            # Set aqi BEFORE appending so next iteration lag reads are correct
             new_row['aqi'] = pred_class
 
             hourly_predictions.append({
@@ -211,7 +192,6 @@ class AQIPredictor:
                 'aqi': pred_class
             })
 
-            # FIX 4: Reset index after concat to keep iloc arithmetic correct
             history = pd.concat(
                 [history, pd.DataFrame([new_row])],
                 ignore_index=True
@@ -220,7 +200,6 @@ class AQIPredictor:
             if hour_offset % 24 == 0:
                 print(f"   Predicted {hour_offset} hours | last predicted AQI: {pred_class}")
 
-        # Aggregate into 3 daily predictions
         df_hourly = pd.DataFrame(hourly_predictions)
         df_hourly['datetime'] = pd.to_datetime(df_hourly['datetime'])
 
@@ -228,7 +207,6 @@ class AQIPredictor:
 
         for day_offset in range(1, 4):
             target_date = (last_dt + timedelta(days=day_offset)).date()
-
             day_slice = df_hourly[df_hourly['datetime'].dt.date == target_date]
 
             if len(day_slice) == 0:
@@ -253,28 +231,25 @@ class AQIPredictor:
         return final_predictions
 
     def _get_label(self, aqi):
-        """Convert AQI (1-5) to category label"""
         mapping = {
-            1: 'ðŸŸ¢ Good',
-            2: 'ðŸŸ¡ Fair',
-            3: 'ðŸŸ  Moderate',
-            4: 'ðŸ”´ Poor',
-            5: 'ðŸ”´ Very Poor'
+            1: 'Good',
+            2: 'Fair',
+            3: 'Moderate',
+            4: 'Poor',
+            5: 'Very Poor'
         }
-        return mapping.get(int(aqi), "â“ Unknown")
+        return mapping.get(int(aqi), "Unknown")
 
     def _get_warning(self, aqi):
-        """Generate health warning based on AQI"""
         if aqi >= 5:
-            return "âš ï¸  HAZARDOUS! Avoid all outdoor exertion."
+            return "HAZARDOUS! Avoid all outdoor exertion."
         if aqi >= 4:
-            return "âš ï¸  POOR! Limit outdoor exposure, especially for sensitive groups."
+            return "POOR! Limit outdoor exposure, especially for sensitive groups."
         if aqi >= 3:
-            return "âš ï¸  MODERATE! Outdoor activities may affect sensitive individuals."
+            return "MODERATE! Outdoor activities may affect sensitive individuals."
         return None
 
     def get_model_comparison(self):
-        """Get performance metrics for all loaded models"""
         comparison = []
         for model_name, metrics in self.model_metrics.items():
             comparison.append({
@@ -289,7 +264,6 @@ class AQIPredictor:
         return sorted(comparison, key=lambda x: x['f1_score'], reverse=True)
 
     def run(self):
-        """Execute prediction pipeline"""
         print("\n" + "="*80)
         print("AQI PREDICTION PIPELINE")
         print(f"Execution Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}")
@@ -322,7 +296,7 @@ class AQIPredictor:
 
             print(f"\nModel Rankings:")
             for i, comp in enumerate(comparison, 1):
-                best_marker = " â­" if comp['is_best'] else ""
+                best_marker = " (best)" if comp['is_best'] else ""
                 print(f"   {i}. {comp['model']:30} | F1: {comp['f1_score']:.4f} | Acc: {comp['accuracy']:.4f}{best_marker}")
 
             print("\n" + "="*80)
@@ -331,9 +305,11 @@ class AQIPredictor:
             print(f"\nERROR in prediction pipeline: {str(e)}")
             raise
 
+
 def main():
     predictor = AQIPredictor()
     predictor.run()
+
 
 if __name__ == "__main__":
     main()
