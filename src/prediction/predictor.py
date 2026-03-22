@@ -105,19 +105,25 @@ class AQIPredictor:
         print("GENERATING 72-HOUR RECURSIVE FORECAST")
         print("="*70)
 
-        # Use tail(120) so lag-48 has enough prior rows to be non-NaN
         raw_history = self.get_latest_features().tail(120).copy().reset_index(drop=True)
 
-        # Only include feature cols that actually exist in this DataFrame
+        # Exclude non-feature columns
         all_feature_cols = [c for c in raw_history.columns
                             if c not in ['datetime', 'timestamp', 'aqi']]
-        feature_cols = [c for c in all_feature_cols if c in raw_history.columns]
 
-        # FIX 3: Fit imputer on the historical feature data so inference matches training
-        # Operate on a plain numpy array to avoid the column-length mismatch
+        # Drop columns that are entirely NaN — imputer cannot handle them and
+        # they carry no signal (e.g. aqi_lag_48h never populated in feature store)
+        non_null_cols = [c for c in all_feature_cols
+                         if raw_history[c].notna().any()]
+        dropped = set(all_feature_cols) - set(non_null_cols)
+        if dropped:
+            print(f"   Dropping all-NaN feature columns: {sorted(dropped)}")
+        feature_cols = non_null_cols
+
+        # Fit imputer and assign back using loc to guarantee shape alignment
         self.imputer = SimpleImputer(strategy='median')
         imputed_array = self.imputer.fit_transform(raw_history[feature_cols])
-        raw_history[feature_cols] = imputed_array
+        raw_history.loc[:, feature_cols] = imputed_array
 
         last_dt = raw_history['datetime'].max()
         pkt = pytz.timezone(TIMEZONE)
