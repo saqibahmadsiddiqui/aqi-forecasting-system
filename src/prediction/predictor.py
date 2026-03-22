@@ -1,4 +1,4 @@
-import pandas as pd
+﻿import pandas as pd
 import numpy as np
 import joblib
 import hopsworks
@@ -111,7 +111,7 @@ class AQIPredictor:
         all_feature_cols = [c for c in raw_history.columns
                             if c not in ['datetime', 'timestamp', 'aqi']]
 
-        # Drop columns that are entirely NaN — imputer cannot handle them and
+        # Drop columns that are entirely NaN â€” imputer cannot handle them and
         # they carry no signal (e.g. aqi_lag_48h never populated in feature store)
         non_null_cols = [c for c in all_feature_cols
                          if raw_history[c].notna().any()]
@@ -141,7 +141,7 @@ class AQIPredictor:
             current_dt = last_dt + timedelta(hours=hour_offset)
 
             # FIX 1: Build new_row from the last row's *features* only, then
-            # overwrite every derived feature below — nothing is blindly inherited.
+            # overwrite every derived feature below â€” nothing is blindly inherited.
             new_row = history.iloc[-1].copy()
             new_row['datetime'] = current_dt
 
@@ -255,22 +255,22 @@ class AQIPredictor:
     def _get_label(self, aqi):
         """Convert AQI (1-5) to category label"""
         mapping = {
-            1: '🟢 Good',
-            2: '🟡 Fair',
-            3: '🟠 Moderate',
-            4: '🔴 Poor',
-            5: '🔴 Very Poor'
+            1: 'ðŸŸ¢ Good',
+            2: 'ðŸŸ¡ Fair',
+            3: 'ðŸŸ  Moderate',
+            4: 'ðŸ”´ Poor',
+            5: 'ðŸ”´ Very Poor'
         }
-        return mapping.get(int(aqi), "❓ Unknown")
+        return mapping.get(int(aqi), "â“ Unknown")
 
     def _get_warning(self, aqi):
         """Generate health warning based on AQI"""
         if aqi >= 5:
-            return "⚠️  HAZARDOUS! Avoid all outdoor exertion."
+            return "âš ï¸  HAZARDOUS! Avoid all outdoor exertion."
         if aqi >= 4:
-            return "⚠️  POOR! Limit outdoor exposure, especially for sensitive groups."
+            return "âš ï¸  POOR! Limit outdoor exposure, especially for sensitive groups."
         if aqi >= 3:
-            return "⚠️  MODERATE! Outdoor activities may affect sensitive individuals."
+            return "âš ï¸  MODERATE! Outdoor activities may affect sensitive individuals."
         return None
 
     def get_model_comparison(self):
@@ -322,7 +322,7 @@ class AQIPredictor:
 
             print(f"\nModel Rankings:")
             for i, comp in enumerate(comparison, 1):
-                best_marker = " ⭐" if comp['is_best'] else ""
+                best_marker = " â­" if comp['is_best'] else ""
                 print(f"   {i}. {comp['model']:30} | F1: {comp['f1_score']:.4f} | Acc: {comp['accuracy']:.4f}{best_marker}")
 
             print("\n" + "="*80)
