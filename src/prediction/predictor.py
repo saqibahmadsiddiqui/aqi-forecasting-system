@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 import numpy as np
 import joblib
 import hopsworks
@@ -105,14 +105,16 @@ class AQIPredictor:
 
         raw_history = self.get_latest_features().tail(120).copy().reset_index(drop=True)
 
-        all_feature_cols = [c for c in raw_history.columns
-                            if c not in ['datetime', 'timestamp', 'aqi']]
+        feature_cols = [c for c in raw_history.columns
+                        if c not in ['datetime', 'timestamp', 'aqi']]
 
-        # Drop columns that are entirely NaN before fitting the imputer
-        feature_cols = [c for c in all_feature_cols if raw_history[c].notna().any()]
-        dropped = set(all_feature_cols) - set(feature_cols)
-        if dropped:
-            print(f"   Dropping all-NaN columns: {sorted(dropped)}")
+        # Fill entirely-NaN columns with 0 so the model receives every feature
+        # it was trained on (e.g. aqi_lag_48h is all-NaN in the feature store
+        # but was present during training)
+        for col in feature_cols:
+            if raw_history[col].isna().all():
+                print(f"   All-NaN column filled with 0: {col}")
+                raw_history[col] = 0.0
 
         # Fit imputer and assign back column by column to avoid shape mismatch
         self.imputer = SimpleImputer(strategy='median')
