@@ -628,7 +628,7 @@ def main():
         <p style="margin: 0.5rem 0;">✅ Status: Active</p>
         <p style="margin: 0.5rem 0;">📊 Type: Classification</p>
         <p style="margin: 0.5rem 0;">📡 Source: OpenWeather API</p>
-        <p style="margin: 0.5rem 0;">⏰ Update: Daily 05:00 AM PST</p>
+        <p style="margin: 0.5rem 0;">⏰ Update: Daily 06:00 AM PST (01:00 AM UTC)</p>
     </div>
     """, unsafe_allow_html=True)
     

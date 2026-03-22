@@ -9,7 +9,7 @@
 
 - **📊 Dashboard**: https://multan-aqi.streamlit.app
 - **📍 Location**: Multan, Punjab, Pakistan (30.1979°N, 71.4724°E)
-- **⚡ Update Frequency**: Hourly data collection, Daily model training at 12:00 AM UTC (5:00 AM PKT)
+- **⚡ Update Frequency**: Hourly data collection, Daily model training at 01:00 AM UTC (6:00 AM PKT)
 - **🎯 Forecast Horizon**: 72-hour ahead with daily aggregates
 
 ## 🎯 Project Overview
