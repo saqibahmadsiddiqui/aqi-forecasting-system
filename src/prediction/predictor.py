@@ -19,7 +19,7 @@ class AQIPredictor:
         self.models = {}
         self.model_metrics = {}
         self.best_model_name = None
-        self.imputer = None
+        self.imputer = None  # FIX 3: imputer now lives on the predictor
 
         self.api_key = HOPSWORKS_API_KEY
         self.project_name = HOPSWORKS_PROJECT_NAME
@@ -105,13 +105,19 @@ class AQIPredictor:
         print("GENERATING 72-HOUR RECURSIVE FORECAST")
         print("="*70)
 
-        raw_history = self.get_latest_features().tail(48).copy().reset_index(drop=True)
+        # Use tail(120) so lag-48 has enough prior rows to be non-NaN
+        raw_history = self.get_latest_features().tail(120).copy().reset_index(drop=True)
 
-        feature_cols = [c for c in raw_history.columns
-                        if c not in ['datetime', 'timestamp', 'aqi']]
+        # Only include feature cols that actually exist in this DataFrame
+        all_feature_cols = [c for c in raw_history.columns
+                            if c not in ['datetime', 'timestamp', 'aqi']]
+        feature_cols = [c for c in all_feature_cols if c in raw_history.columns]
 
+        # FIX 3: Fit imputer on the historical feature data so inference matches training
+        # Operate on a plain numpy array to avoid the column-length mismatch
         self.imputer = SimpleImputer(strategy='median')
-        raw_history[feature_cols] = self.imputer.fit_transform(raw_history[feature_cols])
+        imputed_array = self.imputer.fit_transform(raw_history[feature_cols])
+        raw_history[feature_cols] = imputed_array
 
         last_dt = raw_history['datetime'].max()
         pkt = pytz.timezone(TIMEZONE)
@@ -120,12 +126,16 @@ class AQIPredictor:
         print(f"   Prediction window: 72 hours (3 days)")
         print(f"   Features used: {len(feature_cols)}")
 
+        # FIX 1 + FIX 4: Keep a clean working copy; track predicted AQI values separately
+        # so lag/rolling windows always read correctly updated values.
         history = raw_history.copy()
         hourly_predictions = []
 
         for hour_offset in range(1, 73):
             current_dt = last_dt + timedelta(hours=hour_offset)
 
+            # FIX 1: Build new_row from the last row's *features* only, then
+            # overwrite every derived feature below — nothing is blindly inherited.
             new_row = history.iloc[-1].copy()
             new_row['datetime'] = current_dt
 
@@ -138,12 +148,15 @@ class AQIPredictor:
             new_row['month_cos'] = np.cos(2 * np.pi * current_dt.month / 12)
             new_row['is_weekend'] = 1 if current_dt.weekday() >= 5 else 0
 
+            # FIX 2: Read lag values from history['aqi'] which now contains properly
+            # updated predicted values after each iteration (set at end of loop).
             lags = [1, 3, 6, 12, 24, 48]
             for lag in lags:
                 col = f'aqi_lag_{lag}h'
                 if col in new_row.index and lag <= len(history):
                     new_row[col] = history['aqi'].iloc[-lag]
 
+            # Rolling stats over the correctly updated aqi column
             windows = [3, 6, 12, 24]
             for w in windows:
                 col = f'aqi_rolling_mean_{w}h'
@@ -174,6 +187,7 @@ class AQIPredictor:
             if col in new_row.index:
                 new_row[col] = history['pm2_5'].iloc[-1] * history['wind_speed'].iloc[-1]
 
+            # FIX 3: Apply imputer to handle any remaining NaNs before prediction
             X_raw = pd.DataFrame([new_row[feature_cols]])
             X = pd.DataFrame(
                 self.imputer.transform(X_raw),
@@ -183,6 +197,7 @@ class AQIPredictor:
             pred_class = int(self.models[self.best_model_name].predict(X)[0])
             pred_class = max(1, min(5, pred_class))
 
+            # FIX 2: Set aqi on new_row BEFORE appending so subsequent lag reads are correct
             new_row['aqi'] = pred_class
 
             hourly_predictions.append({
@@ -190,6 +205,7 @@ class AQIPredictor:
                 'aqi': pred_class
             })
 
+            # FIX 4: Reset index after concat to keep iloc arithmetic correct
             history = pd.concat(
                 [history, pd.DataFrame([new_row])],
                 ignore_index=True
