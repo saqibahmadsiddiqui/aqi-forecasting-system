@@ -1,4 +1,4 @@
 date,day_name,average_aqi,min_aqi,max_aqi,category,warning,timestamp
-2026-04-16,Thursday,3,3,3,Moderate,MODERATE! Outdoor activities may affect sensitive individuals.,2026-04-15 04:16:49
-2026-04-17,Friday,3,3,3,Moderate,MODERATE! Outdoor activities may affect sensitive individuals.,2026-04-15 04:16:49
-2026-04-18,Saturday,3,3,3,Moderate,MODERATE! Outdoor activities may affect sensitive individuals.,2026-04-15 04:16:49
+2026-04-17,Friday,4,4,4,Poor,"POOR! Limit outdoor exposure, especially for sensitive groups.",2026-04-16 04:23:51
+2026-04-18,Saturday,4,4,4,Poor,"POOR! Limit outdoor exposure, especially for sensitive groups.",2026-04-16 04:23:51
+2026-04-19,Sunday,4,4,4,Poor,"POOR! Limit outdoor exposure, especially for sensitive groups.",2026-04-16 04:23:51
