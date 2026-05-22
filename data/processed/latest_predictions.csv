@@ -1,4 +1,4 @@
 date,day_name,average_aqi,min_aqi,max_aqi,category,warning,timestamp
-2026-05-21,Thursday,5,5,5,Very Poor,HAZARDOUS! Avoid all outdoor exertion.,2026-05-20 05:17:10
-2026-05-22,Friday,5,5,5,Very Poor,HAZARDOUS! Avoid all outdoor exertion.,2026-05-20 05:17:10
-2026-05-23,Saturday,5,5,5,Very Poor,HAZARDOUS! Avoid all outdoor exertion.,2026-05-20 05:17:10
+2026-05-23,Saturday,3,3,3,Moderate,MODERATE! Outdoor activities may affect sensitive individuals.,2026-05-22 05:14:22
+2026-05-24,Sunday,3,3,3,Moderate,MODERATE! Outdoor activities may affect sensitive individuals.,2026-05-22 05:14:22
+2026-05-25,Monday,3,3,3,Moderate,MODERATE! Outdoor activities may affect sensitive individuals.,2026-05-22 05:14:22
