@@ -85,15 +85,29 @@ class AQIPredictor:
         self.best_model_name = max(scores, key=scores.get)
         print(f"\nBest Model Selected: {self.best_model_name} (F1: {scores[self.best_model_name]:.4f})")
 
+    # def get_latest_features(self):
+    #     print("\nFetching feature context from Online Feature Store...")
+    #     fg = self.fs.get_feature_group(name=FEATURE_GROUP_NAME, version=FEATURE_GROUP_VERSION)
+    #     df = fg.read(online=True).sort_values('datetime').reset_index(drop=True)
+    #     df['datetime'] = pd.to_datetime(df['datetime'])
+
+    #     print(f"   Loaded {len(df)} records")
+    #     print(f"   Latest datetime: {df['datetime'].max()}")
+
+    #     return df
+
     def get_latest_features(self):
         print("\nFetching feature context from Online Feature Store...")
         fg = self.fs.get_feature_group(name=FEATURE_GROUP_NAME, version=FEATURE_GROUP_VERSION)
         df = fg.read(online=True).sort_values('datetime').reset_index(drop=True)
         df['datetime'] = pd.to_datetime(df['datetime'])
 
+        # Impute NaN with column medians before returning
+        num_cols = [c for c in df.columns if c not in ['datetime', 'timestamp']]
+        df[num_cols] = df[num_cols].fillna(df[num_cols].median())
+
         print(f"   Loaded {len(df)} records")
         print(f"   Latest datetime: {df['datetime'].max()}")
-
         return df
 
     def predict_next_3_days(self):
@@ -170,6 +184,7 @@ class AQIPredictor:
 
             # --- Predict ---
             X = pd.DataFrame([new_row[feature_cols]])
+            X = X.fillna(history[feature_cols].median()) #add this line now to handle any potential NaNs in engineered features
             pred_class = int(self.models[self.best_model_name].predict(X)[0])
             pred_class = max(1, min(5, pred_class))
 
