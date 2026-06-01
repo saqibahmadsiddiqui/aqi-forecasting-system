@@ -17,7 +17,8 @@ python-dotenv>=1.0,<2.0
 requests>=2.31,<3.0
 
 # Hopsworks / Feature Store
-hopsworks==4.6.2
+#hopsworks==4.6.2
+hopsworks==4.7.*
 hopsworks_aiomysql[sa]==0.2.2
 pyhumps==1.6.1
 avro==1.12.0
