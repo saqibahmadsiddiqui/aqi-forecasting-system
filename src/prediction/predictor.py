@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import pytz
 from pathlib import Path
 import sys
+import json
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 from src.config.config import *
@@ -34,6 +35,57 @@ class AQIPredictor:
         self.fs = self.project.get_feature_store()
         print("Connected to Hopsworks")
 
+    # def load_latest_models(self):
+    #     print("\nLoading the LATEST 5 Classification Models...")
+
+    #     registry_names = {
+    #         "random_forest": "aqi_random_forest",
+    #         "gradient_boosting": "aqi_gradient_boosting",
+    #         "lightgbm": "aqi_lightgbm",
+    #         "decision_tree": "aqi_decision_tree",
+    #         "sklearn_gradient_boosting": "aqi_sklearn_gradient_boosting"
+    #     }
+
+    #     scores = {}
+
+    #     for local_name, registry_name in registry_names.items():
+    #         try:
+    #             versions = self.mr.get_models(registry_name)
+
+    #             if not versions:
+    #                 print(f"    No versions found for {registry_name}")
+    #                 continue
+
+    #             latest_model = sorted(versions, key=lambda m: m.version, reverse=True)[0]
+
+    #             model_dir = latest_model.download()
+    #             model_path = Path(model_dir) / "model.joblib"
+
+    #             self.models[local_name] = joblib.load(model_path)
+
+    #             f1 = latest_model.training_metrics.get('f1_score', 0)
+    #             accuracy = latest_model.training_metrics.get('accuracy', 0)
+
+    #             scores[local_name] = f1
+    #             self.model_metrics[local_name] = {
+    #                 'f1_score': f1,
+    #                 'accuracy': accuracy,
+    #                 'precision': latest_model.training_metrics.get('precision', 0),
+    #                 'recall': latest_model.training_metrics.get('recall', 0),
+    #                 'version': latest_model.version
+    #             }
+
+    #             print(f"   {local_name:30} v{latest_model.version:3} | F1: {f1:.4f} | Acc: {accuracy:.4f}")
+
+    #         except Exception as e:
+    #             print(f"   Error loading {registry_name}: {str(e)}")
+
+    #     if not scores:
+    #         raise Exception("No models loaded successfully!")
+
+    #     self.best_model_name = max(scores, key=scores.get)
+    #     print(f"\nBest Model Selected: {self.best_model_name} (F1: {scores[self.best_model_name]:.4f})")
+
     def load_latest_models(self):
         print("\nLoading the LATEST 5 Classification Models...")
 
@@ -49,32 +101,38 @@ class AQIPredictor:
 
         for local_name, registry_name in registry_names.items():
             try:
-                versions = self.mr.get_models(registry_name)
+                local_model_path = MODELS_DIR / f"{local_name}.joblib"
+                local_metrics_path = MODELS_DIR / f"{local_name}_metrics.json"
 
-                if not versions:
-                    print(f"    No versions found for {registry_name}")
-                    continue
-
-                latest_model = sorted(versions, key=lambda m: m.version, reverse=True)[0]
-
-                model_dir = latest_model.download()
-                model_path = Path(model_dir) / "model.joblib"
-
-                self.models[local_name] = joblib.load(model_path)
-
-                f1 = latest_model.training_metrics.get('f1_score', 0)
-                accuracy = latest_model.training_metrics.get('accuracy', 0)
-
-                scores[local_name] = f1
-                self.model_metrics[local_name] = {
-                    'f1_score': f1,
-                    'accuracy': accuracy,
-                    'precision': latest_model.training_metrics.get('precision', 0),
-                    'recall': latest_model.training_metrics.get('recall', 0),
-                    'version': latest_model.version
-                }
-
-                print(f"   {local_name:30} v{latest_model.version:3} | F1: {f1:.4f} | Acc: {accuracy:.4f}")
+                if local_model_path.exists() and local_metrics_path.exists():
+                    # Use locally trained models from same job (bypasses Hopsworks download)
+                    self.models[local_name] = joblib.load(local_model_path)
+                    with open(local_metrics_path) as f:
+                        metrics = json.load(f)
+                    scores[local_name] = metrics.get('f1_score', 0)
+                    self.model_metrics[local_name] = {**metrics, 'version': 'local'}
+                    print(f"   {local_name:30} (local) | F1: {metrics.get('f1_score', 0):.4f} | Acc: {metrics.get('accuracy', 0):.4f}")
+                else:
+                    # Fallback: download from Hopsworks registry
+                    versions = self.mr.get_models(registry_name)
+                    if not versions:
+                        print(f"   No versions found for {registry_name}")
+                        continue
+                    latest_model = sorted(versions, key=lambda m: m.version, reverse=True)[0]
+                    model_dir = latest_model.download()
+                    model_path = Path(model_dir) / "model.joblib"
+                    self.models[local_name] = joblib.load(model_path)
+                    f1 = latest_model.training_metrics.get('f1_score', 0)
+                    accuracy = latest_model.training_metrics.get('accuracy', 0)
+                    scores[local_name] = f1
+                    self.model_metrics[local_name] = {
+                        'f1_score': f1,
+                        'accuracy': accuracy,
+                        'precision': latest_model.training_metrics.get('precision', 0),
+                        'recall': latest_model.training_metrics.get('recall', 0),
+                        'version': latest_model.version
+                    }
+                    print(f"   {local_name:30} v{latest_model.version:3} | F1: {f1:.4f} | Acc: {accuracy:.4f}")
 
             except Exception as e:
                 print(f"   Error loading {registry_name}: {str(e)}")
