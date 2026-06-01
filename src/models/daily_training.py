@@ -273,10 +273,6 @@ class DailyTraining:
                     MODELS_DIR.mkdir(parents=True, exist_ok=True)
                     joblib.dump(data['model'], MODELS_DIR / f"{name}.joblib")
 
-                    import json
-                    with open(MODELS_DIR / f"{name}_metrics.json", 'w') as f:
-                        json.dump(metrics, f)
-
                     registered_models[name] = {
                         'version': registered.version,
                         'metrics': metrics

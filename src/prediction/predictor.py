@@ -6,8 +6,6 @@ from datetime import datetime, timedelta
 import pytz
 from pathlib import Path
 import sys
-import time
-import json
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 from src.config.config import *
@@ -36,57 +34,6 @@ class AQIPredictor:
         self.fs = self.project.get_feature_store()
         print("Connected to Hopsworks")
 
-    # def load_latest_models(self):
-    #     print("\nLoading the LATEST 5 Classification Models...")
-
-    #     registry_names = {
-    #         "random_forest": "aqi_random_forest",
-    #         "gradient_boosting": "aqi_gradient_boosting",
-    #         "lightgbm": "aqi_lightgbm",
-    #         "decision_tree": "aqi_decision_tree",
-    #         "sklearn_gradient_boosting": "aqi_sklearn_gradient_boosting"
-    #     }
-
-    #     scores = {}
-
-    #     for local_name, registry_name in registry_names.items():
-    #         try:
-    #             versions = self.mr.get_models(registry_name)
-
-    #             if not versions:
-    #                 print(f"    No versions found for {registry_name}")
-    #                 continue
-
-    #             latest_model = sorted(versions, key=lambda m: m.version, reverse=True)[0]
-
-    #             model_dir = latest_model.download()
-    #             model_path = Path(model_dir) / "model.joblib"
-
-    #             self.models[local_name] = joblib.load(model_path)
-
-    #             f1 = latest_model.training_metrics.get('f1_score', 0)
-    #             accuracy = latest_model.training_metrics.get('accuracy', 0)
-
-    #             scores[local_name] = f1
-    #             self.model_metrics[local_name] = {
-    #                 'f1_score': f1,
-    #                 'accuracy': accuracy,
-    #                 'precision': latest_model.training_metrics.get('precision', 0),
-    #                 'recall': latest_model.training_metrics.get('recall', 0),
-    #                 'version': latest_model.version
-    #             }
-
-    #             print(f"   {local_name:30} v{latest_model.version:3} | F1: {f1:.4f} | Acc: {accuracy:.4f}")
-
-    #         except Exception as e:
-    #             print(f"   Error loading {registry_name}: {str(e)}")
-
-    #     if not scores:
-    #         raise Exception("No models loaded successfully!")
-
-    #     self.best_model_name = max(scores, key=scores.get)
-    #     print(f"\nBest Model Selected: {self.best_model_name} (F1: {scores[self.best_model_name]:.4f})")
-    
     def load_latest_models(self):
         print("\nLoading the LATEST 5 Classification Models...")
 
@@ -101,62 +48,36 @@ class AQIPredictor:
         scores = {}
 
         for local_name, registry_name in registry_names.items():
-            loaded = False
+            try:
+                versions = self.mr.get_models(registry_name)
 
-            for attempt in range(3):
-                try:
-                    versions = self.mr.get_models(registry_name)
-                    if not versions:
-                        print(f"   No versions found for {registry_name}")
-                        break
+                if not versions:
+                    print(f"    No versions found for {registry_name}")
+                    continue
 
-                    latest_model = sorted(versions, key=lambda m: m.version, reverse=True)[0]
-                    model_dir = latest_model.download()
-                    self.models[local_name] = joblib.load(Path(model_dir) / "model.joblib")
+                latest_model = sorted(versions, key=lambda m: m.version, reverse=True)[0]
 
-                    f1       = latest_model.training_metrics.get('f1_score', 0)
-                    accuracy = latest_model.training_metrics.get('accuracy', 0)
-                    scores[local_name] = f1
-                    self.model_metrics[local_name] = {
-                        'f1_score':  f1,
-                        'accuracy':  accuracy,
-                        'precision': latest_model.training_metrics.get('precision', 0),
-                        'recall':    latest_model.training_metrics.get('recall', 0),
-                        'version':   latest_model.version
-                    }
-                    print(f"   {local_name:30} v{latest_model.version:3} | F1: {f1:.4f} | Acc: {accuracy:.4f}")
-                    loaded = True
-                    break
+                model_dir = latest_model.download()
+                model_path = Path(model_dir) / "model.joblib"
 
-                except Exception as e:
-                    if attempt < 2:
-                        wait = 10 * (attempt + 1)
-                        print(f"   Attempt {attempt + 1} failed for {registry_name}: {e}, retrying in {wait}s...")
-                        time.sleep(wait)
-                    else:
-                        print(f"   Error loading {registry_name}: {e}")
+                self.models[local_name] = joblib.load(model_path)
 
-            if not loaded:
-                model_path   = MODELS_DIR / f"{local_name}.joblib"
-                metrics_path = MODELS_DIR / f"{local_name}_metrics.json"
-                if model_path.exists():
-                    try:
-                        self.models[local_name] = joblib.load(model_path)
-                        cached = {}
-                        if metrics_path.exists():
-                            with open(metrics_path) as f:
-                                cached = json.load(f)
-                        scores[local_name] = cached.get('f1_score', 0)
-                        self.model_metrics[local_name] = {
-                            'f1_score':  cached.get('f1_score', 0),
-                            'accuracy':  cached.get('accuracy', 0),
-                            'precision': cached.get('precision', 0),
-                            'recall':    cached.get('recall', 0),
-                            'version':   'local'
-                        }
-                        print(f"   {local_name:30} loaded from local cache | F1: {scores[local_name]:.4f}")
-                    except Exception as le:
-                        print(f"   Local fallback failed for {local_name}: {le}")
+                f1 = latest_model.training_metrics.get('f1_score', 0)
+                accuracy = latest_model.training_metrics.get('accuracy', 0)
+
+                scores[local_name] = f1
+                self.model_metrics[local_name] = {
+                    'f1_score': f1,
+                    'accuracy': accuracy,
+                    'precision': latest_model.training_metrics.get('precision', 0),
+                    'recall': latest_model.training_metrics.get('recall', 0),
+                    'version': latest_model.version
+                }
+
+                print(f"   {local_name:30} v{latest_model.version:3} | F1: {f1:.4f} | Acc: {accuracy:.4f}")
+
+            except Exception as e:
+                print(f"   Error loading {registry_name}: {str(e)}")
 
         if not scores:
             raise Exception("No models loaded successfully!")
@@ -164,30 +85,15 @@ class AQIPredictor:
         self.best_model_name = max(scores, key=scores.get)
         print(f"\nBest Model Selected: {self.best_model_name} (F1: {scores[self.best_model_name]:.4f})")
 
-
-    # def get_latest_features(self):
-    #     print("\nFetching feature context from Online Feature Store...")
-    #     fg = self.fs.get_feature_group(name=FEATURE_GROUP_NAME, version=FEATURE_GROUP_VERSION)
-    #     df = fg.read(online=True).sort_values('datetime').reset_index(drop=True)
-    #     df['datetime'] = pd.to_datetime(df['datetime'])
-
-    #     print(f"   Loaded {len(df)} records")
-    #     print(f"   Latest datetime: {df['datetime'].max()}")
-
-    #     return df
-
     def get_latest_features(self):
         print("\nFetching feature context from Online Feature Store...")
         fg = self.fs.get_feature_group(name=FEATURE_GROUP_NAME, version=FEATURE_GROUP_VERSION)
         df = fg.read(online=True).sort_values('datetime').reset_index(drop=True)
         df['datetime'] = pd.to_datetime(df['datetime'])
 
-        # Impute NaN with column medians before returning
-        num_cols = [c for c in df.columns if c not in ['datetime', 'timestamp']]
-        df[num_cols] = df[num_cols].fillna(df[num_cols].median())
-
         print(f"   Loaded {len(df)} records")
         print(f"   Latest datetime: {df['datetime'].max()}")
+
         return df
 
     def predict_next_3_days(self):
@@ -264,7 +170,6 @@ class AQIPredictor:
 
             # --- Predict ---
             X = pd.DataFrame([new_row[feature_cols]])
-            X = X.fillna(history[feature_cols].median()) #add this line now to handle any potential NaNs in engineered features
             pred_class = int(self.models[self.best_model_name].predict(X)[0])
             pred_class = max(1, min(5, pred_class))
 

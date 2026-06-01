@@ -215,11 +215,8 @@ class HourlyPipeline:
         raw_cols = ['datetime', 'aqi', 'co', 'no2', 'pm2_5', 'pm10', 'temp', 'feels_like', 'pressure', 'dew_point', 'wind_speed', 'wind_deg']
         engineered = self.engineer(new, hist_recent[raw_cols])
         
-        # print("\nUploading to Feature Store...")
-        # self.fg.insert(engineered, write_options={"wait_for_job": False})
-        # print("Upload complete. Materialization started in background.")
         print("\nUploading to Feature Store...")
-        self.upload(engineered)
+        self.fg.insert(engineered, write_options={"wait_for_job": False})
         print("Upload complete. Materialization started in background.")
 
 def main():
