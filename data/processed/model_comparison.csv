@@ -1,6 +1,6 @@
 model,f1_score,accuracy,precision,recall,version,is_best
-Lightgbm,0.9958,0.9958,0.9959,0.9958,local,True
-Gradient Boosting,0.9954,0.9954,0.9954,0.9954,local,False
-Decision Tree,0.9942,0.9942,0.9942,0.9942,local,False
-Sklearn Gradient Boosting,0.9938,0.9938,0.9938,0.9938,local,False
-Random Forest,0.9925,0.9925,0.9925,0.9925,local,False
+Gradient Boosting,0.9975,0.9975,0.9975,0.9975,local,True
+Lightgbm,0.9975,0.9975,0.9975,0.9975,local,False
+Sklearn Gradient Boosting,0.9959,0.9958,0.9959,0.9958,local,False
+Decision Tree,0.9946,0.9946,0.9946,0.9946,local,False
+Random Forest,0.9938,0.9938,0.9938,0.9938,local,False
