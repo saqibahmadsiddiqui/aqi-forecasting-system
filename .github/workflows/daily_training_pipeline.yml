@@ -5,6 +5,10 @@ on:
     - cron: '0 1 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   train-and-predict:
     runs-on: ubuntu-latest
@@ -48,4 +52,10 @@ jobs:
         git config --local user.email "saqibahmad2004@gmail.com"
         git config --local user.name "saqibahmadsiddiqui"
         git add data/processed/latest_predictions.csv data/processed/model_comparison.csv
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update predictions $(date +'%Y-%m-%d')" && git push)
+        if ! git diff --quiet || ! git diff --staged --quiet; then
+          git commit -m "Update predictions $(date +'%Y-%m-%d')"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break
+            sleep 5
+          done
+        fi
