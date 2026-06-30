@@ -163,12 +163,22 @@ class HourlyPipeline:
         print(f"{len(result.columns)} features")
         return result
     
-    def upload(self, data):
+    def upload(self, data, recent_hist=None):
         print("\nUploading...")
-        
         data = data.copy()
         data['datetime'] = pd.to_datetime(data['datetime'], utc=True)
-        data = data.fillna(0)
+
+        nan_cols = data.columns[data.isna().any()].tolist()
+        if nan_cols:
+            print(f"   WARNING: {nan_cols} NaN (insufficient lookback) — back-filling")
+            for col in nan_cols:
+                fallback = 0
+                if recent_hist is not None and col in recent_hist.columns:
+                    valid = recent_hist[col].dropna()
+                    if len(valid):
+                        fallback = valid.iloc[-1]
+                data[col] = data[col].fillna(fallback)
+
         data['timestamp'] = (data['datetime'].astype('int64') // 10**6)
         data['is_weekend'] = data['is_weekend'].astype('int64')
         data['aqi'] = data['aqi'].astype('int64')
@@ -177,7 +187,6 @@ class HourlyPipeline:
             self.fg.insert(data, write_options={"wait_for_job": False})
             print("Uploaded successfully")
             time.sleep(2)
-
         except Exception as e:
             print(f"Upload failed: {e}")
             print("Retrying once...")
@@ -187,6 +196,7 @@ class HourlyPipeline:
                 print("Uploaded successfully (retry)")
             except Exception as e2:
                 print(f"Upload failed again: {e2}")
+                raise
 
     
     def run(self):
@@ -215,9 +225,7 @@ class HourlyPipeline:
         raw_cols = ['datetime', 'aqi', 'co', 'no2', 'pm2_5', 'pm10', 'temp', 'feels_like', 'pressure', 'dew_point', 'wind_speed', 'wind_deg']
         engineered = self.engineer(new, hist_recent[raw_cols])
         
-        print("\nUploading to Feature Store...")
-        self.fg.insert(engineered, write_options={"wait_for_job": False})
-        print("Upload complete. Materialization started in background.")
+        self.upload(engineered, recent_hist=hist_recent)
 
 def main():
     HourlyPipeline().run()
