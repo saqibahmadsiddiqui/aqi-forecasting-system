@@ -51,11 +51,25 @@ jobs:
       run: |
         git config --local user.email "saqibahmad2004@gmail.com"
         git config --local user.name "saqibahmadsiddiqui"
-        git add data/processed/latest_predictions.csv data/processed/model_comparison.csv
-        if ! git diff --quiet || ! git diff --staged --quiet; then
+
+        cp data/processed/latest_predictions.csv /tmp/latest_predictions.csv
+        cp data/processed/model_comparison.csv /tmp/model_comparison.csv
+
+        for i in 1 2 3 4 5; do
+          git fetch origin main
+          git reset --hard origin/main
+          cp /tmp/latest_predictions.csv data/processed/latest_predictions.csv
+          cp /tmp/model_comparison.csv data/processed/model_comparison.csv
+          git add data/processed/latest_predictions.csv data/processed/model_comparison.csv
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            break
+          fi
           git commit -m "Update predictions $(date +'%Y-%m-%d')"
-          for i in 1 2 3; do
-            git pull --rebase origin main && git push && break
-            sleep 5
-          done
-        fi
+          if git push origin main; then
+            echo "Pushed successfully"
+            break
+          fi
+          echo "Push rejected, retrying ($i)..."
+          sleep $((RANDOM % 10 + 5))
+        done
