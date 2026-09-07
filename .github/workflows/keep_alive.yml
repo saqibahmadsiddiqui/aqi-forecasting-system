@@ -30,9 +30,22 @@ jobs:
               browser = p.chromium.launch()
               page = browser.new_page()
               page.goto(url, timeout=60000)
-              # give the app time to actually boot and the WS to connect
-              time.sleep(15)
-              print("Title:", page.title())
+              time.sleep(3)
+
+              # Look for the "wake up" button Streamlit shows on a sleeping app
+              try:
+                  button = page.get_by_role("button", name="Yes, get this app back up!")
+                  if button.is_visible(timeout=5000):
+                      print("App is asleep — clicking wake button")
+                      button.click()
+                      # Give it real time to boot — cold starts can take 30-60s+
+                      page.wait_for_timeout(60000)
+                  else:
+                      print("App already awake")
+              except Exception as e:
+                  print(f"No wake button found (probably already awake): {e}")
+
+              print("Final title:", page.title())
               browser.close()
           EOF
         env:
