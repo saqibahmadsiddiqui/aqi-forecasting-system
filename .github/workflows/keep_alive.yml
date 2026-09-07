@@ -1,14 +1,39 @@
 name: Keep Streamlit Alive
-
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Ping Streamlit App
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Playwright
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.STREAMLIT_APP_URL }}")
-          echo "Response: $STATUS"
+          pip install playwright
+          playwright install chromium --with-deps
+
+      - name: Wake Streamlit App
+        run: |
+          python - <<'EOF'
+          from playwright.sync_api import sync_playwright
+          import os, time
+
+          url = os.environ["STREAMLIT_APP_URL"]
+
+          with sync_playwright() as p:
+              browser = p.chromium.launch()
+              page = browser.new_page()
+              page.goto(url, timeout=60000)
+              # give the app time to actually boot and the WS to connect
+              time.sleep(15)
+              print("Title:", page.title())
+              browser.close()
+          EOF
+        env:
+          STREAMLIT_APP_URL: ${{ secrets.STREAMLIT_APP_URL }}
