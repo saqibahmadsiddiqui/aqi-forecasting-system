@@ -2,7 +2,7 @@ name: Daily Model Training & Prediction
 
 on:
   schedule:
-    - cron: '0 1 * * *'
+    - cron: '7 19 * * *'
   workflow_dispatch:
 
 concurrency:
