@@ -29,9 +29,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt "numpy==1.26.4" "pyarrow==17.0.0"
+          pip install -r requirements.txt
           pip check
-          pip list | grep -Ei "numpy|pyarrow|pandas|scikit|hopsworks"
 
       - name: Train models
         run: python src/models/daily_training.py
