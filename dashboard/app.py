@@ -14,7 +14,7 @@ from src.config.config import *
 
 st.set_page_config(
     page_title="AQI Forecast - Multan Pakistan",
-    page_icon="🌫️",
+    page_icon="☁️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
