@@ -12,64 +12,45 @@ concurrency:
 jobs:
   train-and-predict:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
-    
+    env:
+      HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
+      HOPSWORKS_PROJECT_NAME: ${{ secrets.HOPSWORKS_PROJECT_NAME }}
+      HOPSWORKS_HOST: ${{ secrets.HOPSWORKS_HOST }}
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        #cache: 'pip'
-        
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install -r requirements.txt
+      - uses: actions/checkout@v4
 
-    - name: Train models
-      env:
-        HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
-        HOPSWORKS_PROJECT_NAME: ${{ secrets.HOPSWORKS_PROJECT_NAME }}
-        HOPSWORKS_HOST: ${{ secrets.HOPSWORKS_HOST }}
-      run: |
-        python src/models/daily_training.py
-        
-    - name: Generate predictions
-      env:
-        HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
-        HOPSWORKS_PROJECT_NAME: ${{ secrets.HOPSWORKS_PROJECT_NAME }}
-        HOPSWORKS_HOST: ${{ secrets.HOPSWORKS_HOST }}
-      run: |
-        python src/prediction/predictor.py
-        
-    - name: Commit predictions
-      run: |
-        git config --local user.email "saqibahmad2004@gmail.com"
-        git config --local user.name "saqibahmadsiddiqui"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-        cp data/processed/latest_predictions.csv /tmp/latest_predictions.csv
-        cp data/processed/model_comparison.csv /tmp/model_comparison.csv
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt "numpy==1.26.4" "pyarrow==17.0.0"
+          pip check
+          pip list | grep -Ei "numpy|pyarrow|pandas|scikit|hopsworks"
 
-        for i in 1 2 3 4 5; do
-          git fetch origin main
-          git reset --hard origin/main
-          cp /tmp/latest_predictions.csv data/processed/latest_predictions.csv
-          cp /tmp/model_comparison.csv data/processed/model_comparison.csv
-          git add data/processed/latest_predictions.csv data/processed/model_comparison.csv
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-            break
-          fi
-          git commit -m "Update predictions $(date +'%Y-%m-%d')"
-          if git push origin main; then
-            echo "Pushed successfully"
-            break
-          fi
-          echo "Push rejected, retrying ($i)..."
-          sleep $((RANDOM % 10 + 5))
-        done
+      - name: Train models
+        run: python src/models/daily_training.py
+
+      - name: Generate predictions
+        run: python src/prediction/predictor.py
+
+      - name: Commit predictions
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cp data/processed/latest_predictions.csv data/processed/model_comparison.csv /tmp/
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            cp /tmp/latest_predictions.csv /tmp/model_comparison.csv data/processed/
+            git add data/processed/latest_predictions.csv data/processed/model_comparison.csv
+            git diff --staged --quiet && { echo "No changes"; break; }
+            git commit -m "Update predictions $(date +'%Y-%m-%d')"
+            git push origin main && break
+            sleep $((RANDOM % 10 + 5))
+          done
