@@ -598,7 +598,7 @@ def show_about():
 
 def main():
     # Header
-    st.markdown('<div class="main-title">🌫️ AQI Forecasting System</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-title">☁️ AQI Forecasting System</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-title">Next 3-days Air Quality Index Prediction for Multan</div>', unsafe_allow_html=True)
     st.markdown('<div class="tagline">Stay informed. Stay safe.</div>', unsafe_allow_html=True)
     
@@ -628,7 +628,7 @@ def main():
         <p style="margin: 0.5rem 0;">✅ Status: Active</p>
         <p style="margin: 0.5rem 0;">📊 Type: Classification</p>
         <p style="margin: 0.5rem 0;">📡 Source: OpenWeather API</p>
-        <p style="margin: 0.5rem 0;">⏰ Update: Daily 06:00 AM PST (01:00 AM UTC)</p>
+        <p style="margin: 0.5rem 0;">⏰ Update: Daily 11:00 AM PST</p>
     </div>
     """, unsafe_allow_html=True)
     
