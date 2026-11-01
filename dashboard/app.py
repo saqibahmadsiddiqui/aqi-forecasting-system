@@ -56,33 +56,33 @@ def generate_theme_css(theme_mode: str) -> str:
         --bg-surface-elevated: #f1f5f9;
         --bg-surface-hover: #e2e8f0;
         --bg-sidebar: #f8fafc;
-        --border-default: #cbd5e1;
-        --border-subtle: #e2e8f0;
+        --border-default: #94a3b8;
+        --border-subtle: #cbd5e1;
         --border-focus: #0284c7;
-        --text-primary: #0f172a;
-        --text-secondary: #475569;
-        --text-muted: #94a3b8;
+        --text-primary: #090d16;
+        --text-secondary: #1e293b;
+        --text-muted: #334155;
         --accent-primary: #0284c7;
         --accent-subtle: #e0f2fe;
         --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
         
-        --aqi-1-color: #059669;
+        --aqi-1-color: #047857;
         --aqi-1-bg: #ecfdf5;
-        --aqi-1-border: #a7f3d0;
-        --aqi-2-color: #65a30d;
+        --aqi-1-border: #6ee7b7;
+        --aqi-2-color: #4d7c0f;
         --aqi-2-bg: #f7fee7;
-        --aqi-2-border: #bef264;
-        --aqi-3-color: #d97706;
+        --aqi-2-border: #a3e635;
+        --aqi-3-color: #b45309;
         --aqi-3-bg: #fffbeb;
-        --aqi-3-border: #fde68a;
-        --aqi-4-color: #dc2626;
+        --aqi-3-border: #fcd34d;
+        --aqi-4-color: #b91c1c;
         --aqi-4-bg: #fef2f2;
-        --aqi-4-border: #fecaca;
-        --aqi-5-color: #9f1239;
+        --aqi-4-border: #fca5a5;
+        --aqi-5-color: #881337;
         --aqi-5-bg: #fff1f2;
-        --aqi-5-border: #fecdd3;
+        --aqi-5-border: #fda4af;
     """
 
     dark_tokens = """
@@ -181,67 +181,73 @@ def generate_theme_css(theme_mode: str) -> str:
             color: var(--text-primary);
         }}
 
-        /* Sidebar Collapse / Open Toggle Button Visibility in Light & Dark Mode */
-        [data-testid="stSidebarCollapseButton"],
-        [data-testid="stSidebarCollapsedControl"],
-        [data-testid="collapsedControl"],
-        [data-testid="stSidebarHeader"] button,
-        button[kind="header"],
-        button[data-testid="baseButton-header"],
-        [data-testid="stHeader"] [data-testid="collapsedControl"] {{
+        /* High-contrast floating toggle for collapsed sidebar */
+        div[data-testid="collapsedControl"],
+        div[data-testid="stSidebarCollapsedControl"] {{
+            position: fixed !important;
+            top: 14px !important;
+            left: 14px !important;
+            z-index: 9999999 !important;
+            display: block !important;
+            visibility: visible !important;
+        }}
+
+        /* Style the actual button for both open and close states across all Streamlit versions */
+        div[data-testid="collapsedControl"] button,
+        div[data-testid="stSidebarCollapsedControl"] button,
+        header[data-testid="stHeader"] button[kind="headerNoPadding"],
+        header[data-testid="stHeader"] button[kind="header"],
+        div[data-testid="stSidebarCollapseButton"] button,
+        button[data-testid="stSidebarCollapseButton"] {{
             display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             visibility: visible !important;
             opacity: 1 !important;
-            color: var(--text-primary) !important;
             background-color: var(--bg-surface-elevated) !important;
-            border: 1px solid var(--border-default) !important;
+            border: 2px solid var(--border-default) !important;
             border-radius: 8px !important;
-            box-shadow: var(--shadow-sm) !important;
-            z-index: 999999 !important;
+            padding: 6px 8px !important;
+            min-width: 36px !important;
+            min-height: 36px !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+            cursor: pointer !important;
             transition: all 0.2s ease !important;
         }}
 
-        [data-testid="stSidebarCollapseButton"] button,
-        [data-testid="collapsedControl"] button {{
-            color: var(--text-primary) !important;
-            background-color: transparent !important;
-            border: none !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-        }}
-
-        /* Ensure chevron SVG icon inside toggle button is always high contrast */
-        [data-testid="stSidebarCollapseButton"] svg,
-        [data-testid="stSidebarCollapsedControl"] svg,
-        [data-testid="collapsedControl"] svg,
-        [data-testid="stSidebarHeader"] button svg,
-        button[kind="header"] svg,
-        button[data-testid="baseButton-header"] svg {{
+        /* Force high contrast on SVGs and icons inside */
+        div[data-testid="collapsedControl"] svg,
+        div[data-testid="collapsedControl"] button svg,
+        div[data-testid="stSidebarCollapsedControl"] svg,
+        div[data-testid="stSidebarCollapsedControl"] button svg,
+        div[data-testid="stSidebarCollapseButton"] svg,
+        div[data-testid="stSidebarCollapseButton"] button svg,
+        header[data-testid="stHeader"] button svg,
+        button[kind="headerNoPadding"] svg {{
             fill: var(--text-primary) !important;
             stroke: var(--text-primary) !important;
             color: var(--text-primary) !important;
             width: 20px !important;
             height: 20px !important;
-            display: block !important;
-            opacity: 1 !important;
+            display: inline-block !important;
             visibility: visible !important;
+            opacity: 1 !important;
         }}
 
-        /* Hover states for sidebar toggle */
-        [data-testid="stSidebarCollapseButton"]:hover,
-        [data-testid="stSidebarCollapsedControl"]:hover,
-        [data-testid="collapsedControl"]:hover,
-        [data-testid="stSidebarHeader"] button:hover,
-        button[kind="header"]:hover {{
+        div[data-testid="collapsedControl"] button:hover,
+        div[data-testid="stSidebarCollapseButton"] button:hover,
+        header[data-testid="stHeader"] button[kind="headerNoPadding"]:hover {{
             background-color: var(--bg-surface-hover) !important;
             border-color: var(--accent-primary) !important;
-            transform: scale(1.05) !important;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35) !important;
         }}
 
-        [data-testid="stSidebarCollapseButton"]:hover svg,
-        [data-testid="collapsedControl"]:hover svg {{
+        div[data-testid="collapsedControl"] button:hover svg,
+        div[data-testid="stSidebarCollapseButton"] button:hover svg,
+        header[data-testid="stHeader"] button[kind="headerNoPadding"]:hover svg {{
             fill: var(--accent-primary) !important;
             stroke: var(--accent-primary) !important;
+            color: var(--accent-primary) !important;
         }}
 
         /* Clean Section Headers */
@@ -706,11 +712,11 @@ def create_trend_chart(predictions_df: pd.DataFrame, theme_mode: str) -> go.Figu
     """
     Renders an interactive 72-hour AQI trend chart with clean engineering styling.
     """
-    is_dark = theme_mode == "Dark" or (theme_mode == "System")
-    font_color = "#94a3b8" if is_dark else "#475569"
-    grid_color = "rgba(255, 255, 255, 0.07)" if is_dark else "#f1f5f9"
+    is_dark = theme_mode == "Dark"
+    font_color = "#f9fafb" if is_dark else "#090d16"
+    grid_color = "rgba(255, 255, 255, 0.1)" if is_dark else "#cbd5e1"
     line_color = "#38bdf8" if is_dark else "#0284c7"
-    fill_color = "rgba(56, 189, 248, 0.12)" if is_dark else "rgba(2, 132, 199, 0.08)"
+    fill_color = "rgba(56, 189, 248, 0.15)" if is_dark else "rgba(2, 132, 199, 0.12)"
 
     fig = go.Figure()
 
@@ -765,11 +771,11 @@ def create_model_comparison_chart(comparison_df: pd.DataFrame, theme_mode: str) 
     if comparison_df.empty:
         return None
 
-    is_dark = theme_mode == "Dark" or (theme_mode == "System")
-    font_color = "#94a3b8" if is_dark else "#475569"
-    grid_color = "rgba(255, 255, 255, 0.07)" if is_dark else "#f1f5f9"
+    is_dark = theme_mode == "Dark"
+    font_color = "#f9fafb" if is_dark else "#090d16"
+    grid_color = "rgba(255, 255, 255, 0.1)" if is_dark else "#cbd5e1"
     accent_best = "#38bdf8" if is_dark else "#0284c7"
-    accent_others = "#475569" if is_dark else "#cbd5e1"
+    accent_others = "#475569" if is_dark else "#64748b"
 
     # Identify best model
     best_idx = comparison_df['f1_score'].idxmax()
@@ -783,7 +789,7 @@ def create_model_comparison_chart(comparison_df: pd.DataFrame, theme_mode: str) 
         marker=dict(color=colors, line=dict(color='rgba(0,0,0,0)', width=0), cornerradius=6),
         text=[f"{v:.4f}" for v in comparison_df['f1_score']],
         textposition='outside',
-        textfont=dict(color=font_color, size=11),
+        textfont=dict(color=font_color, size=12, family="Inter, -apple-system, sans-serif"),
         hovertemplate='<b>%{x}</b><br>Macro F1: %{y:.4f}<extra></extra>'
     ))
 
@@ -827,70 +833,97 @@ def render_forecast_page(predictions_df: pd.DataFrame, comparison_df: pd.DataFra
         """, unsafe_allow_html=True)
         return
 
-    # Check for severe conditions
+    # Local Multan Date Context
+    try:
+        pkt = pytz.timezone(TIMEZONE)
+    except Exception:
+        pkt = pytz.timezone("Asia/Karachi")
+    current_time = datetime.now(pkt)
+    today_date = current_time.date()
+
+    # Calculate average AQI across the 3 forecast days
+    avg_aqi = float(predictions_df['average_aqi'].mean())
+    avg_aqi_level = int(round(avg_aqi))
+    avg_token = AQI_THEME_TOKENS.get(avg_aqi_level, AQI_THEME_TOKENS[1])
+
+    first_day_row = predictions_df.iloc[0]
+    first_day_aqi = int(first_day_row['average_aqi'])
+    first_day_token = AQI_THEME_TOKENS.get(first_day_aqi, AQI_THEME_TOKENS[1])
+    first_day_date = first_day_row['date']
+    first_day_name = first_day_row['day_name']
+
+    last_day_date = predictions_df.iloc[-1]['date']
     max_forecast_aqi = int(predictions_df['average_aqi'].max())
-    has_severe_warning = max_forecast_aqi >= 5
+    max_token = AQI_THEME_TOKENS.get(max_forecast_aqi, AQI_THEME_TOKENS[1])
+    has_severe_warning = max_forecast_aqi >= 4
 
     if has_severe_warning:
-        st.markdown("""
+        st.markdown(f"""
         <div class="alert-banner">
             <div>
-                <div class="alert-banner-title">⚠️ Severe Atmospheric Alert: Category 5 Hazardous Conditions Expected</div>
-                Particulate concentrations across Multan are projected to reach hazardous thresholds over the next 72 hours.
-                Avoid outdoor endurance activities. Keep windows sealed and wear certified N95/FFP2 respirators when in transit.
+                <div class="alert-banner-title">⚠️ Severe Atmospheric Alert: Category {max_forecast_aqi} ({max_token['name']}) Expected Over Next 3 Days</div>
+                Particulate concentrations across Multan are projected to remain hazardous from {first_day_date} through {last_day_date}.
+                Sensitive groups (asthma, cardiovascular conditions, elderly, and children) must avoid outdoor activities. Certified N95/FFP2 respirators are strongly recommended when commuting.
             </div>
         </div>
         """, unsafe_allow_html=True)
 
     # Executive KPI Summary Grid
-    best_model_name = "Ensemble"
+    best_model_name = "LightGBM"
     best_model_f1 = "N/A"
     if not comparison_df.empty:
         best_row = comparison_df.loc[comparison_df['f1_score'].idxmax()]
         best_model_name = str(best_row['model'])
         best_model_f1 = f"{best_row['f1_score']:.4f}"
 
-    today_row = predictions_df.iloc[0]
-    today_aqi = int(today_row['average_aqi'])
-    today_token = AQI_THEME_TOKENS.get(today_aqi, AQI_THEME_TOKENS[1])
-
     st.markdown(f"""
     <div class="kpi-grid">
         <div class="kpi-card">
-            <div class="kpi-label">Today's Projected Air Quality</div>
-            <div class="kpi-value" style="color: {today_token['color_var']};">{today_aqi} · {today_token['name']}</div>
-            <div class="kpi-subtext">{today_row['day_name']} expectation for Multan</div>
+            <div class="kpi-label">3-Day Projected Average AQI</div>
+            <div class="kpi-value" style="color: {avg_token['color_var']};">{avg_aqi:.1f} · {avg_token['name']}</div>
+            <div class="kpi-subtext">Multan average for next 3 days ({first_day_date} to {last_day_date})</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-label">72-Hour Maximum Risk</div>
-            <div class="kpi-value">Level {max_forecast_aqi}</div>
-            <div class="kpi-subtext">Peak severity across forecast horizon</div>
+            <div class="kpi-label">Day 1 Forecast ({first_day_name})</div>
+            <div class="kpi-value" style="color: {first_day_token['color_var']};">Level {first_day_aqi} · {first_day_token['name']}</div>
+            <div class="kpi-subtext">Next-day projection for {first_day_date}</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-label">Primary Active Model</div>
+            <div class="kpi-label">3-Day Maximum Peak Risk</div>
+            <div class="kpi-value">Level {max_forecast_aqi} ({max_token['name']})</div>
+            <div class="kpi-subtext">Highest projected level across horizon</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Production Machine Learning Model</div>
             <div class="kpi-value" style="font-size: 1.45rem;">{best_model_name}</div>
             <div class="kpi-subtext">Validation Macro F1: {best_model_f1}</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Prediction Horizon</div>
-            <div class="kpi-value">{PREDICTION_HORIZON_DAYS} Days</div>
-            <div class="kpi-subtext">Auto-regressive recursive forecasting</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     # 3-Day Forecast Cards Grid
-    st.markdown('<div class="panel-title" style="margin-bottom: 0.85rem;">Daily Forecast Trajectory</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="panel-title" style="margin-bottom: 0.85rem;">Daily Forecast Trajectory (Next 3 Days: {first_day_date} to {last_day_date})</div>', unsafe_allow_html=True)
     cols = st.columns(len(predictions_df), gap="medium")
-
-    relative_labels = ["Today", "Tomorrow", "In 2 Days"]
 
     for idx, (_, row) in enumerate(predictions_df.iterrows()):
         aqi_val = int(row['average_aqi'])
         token = AQI_THEME_TOKENS.get(aqi_val, AQI_THEME_TOKENS[1])
-        rel_label = relative_labels[idx] if idx < len(relative_labels) else f"Day {idx+1}"
         min_aqi = int(row['min_aqi'])
         max_aqi = int(row['max_aqi'])
+        
+        # Calculate dynamic relative label from current date
+        pred_date_obj = pd.to_datetime(row['date']).date()
+        diff = (pred_date_obj - today_date).days
+        if diff == 1:
+            rel_label = "Tomorrow"
+        elif diff == 0:
+            rel_label = "Today"
+        elif diff > 1:
+            rel_label = f"In {diff} Days"
+        else:
+            rel_label = f"Day {idx + 1}"
+            
+        badge_text = f"Day {idx + 1} · {rel_label}"
 
         with cols[idx]:
             st.markdown(f"""
@@ -901,7 +934,7 @@ def render_forecast_page(predictions_df: pd.DataFrame, comparison_df: pd.DataFra
                             <div class="forecast-day-name">{row['day_name']}</div>
                             <div class="forecast-date">{row['date']}</div>
                         </div>
-                        <span class="badge badge-brand">{rel_label}</span>
+                        <span class="badge badge-brand">{badge_text}</span>
                     </div>
                     <div class="aqi-pill-hero" style="background-color: {token['bg_var']}; border-color: {token['border_var']}; color: {token['color_var']};">
                         <div class="aqi-pill-val">{aqi_val}</div>
@@ -915,7 +948,7 @@ def render_forecast_page(predictions_df: pd.DataFrame, comparison_df: pd.DataFra
                     </div>
                 </div>
                 <div style="padding-top: 0.75rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">Status Code</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Health Impact</span>
                     <span class="badge" style="background-color: {token['bg_var']}; color: {token['color_var']}; border: 1px solid {token['border_var']};">
                         {token['badge_text']}
                     </span>
@@ -927,8 +960,8 @@ def render_forecast_page(predictions_df: pd.DataFrame, comparison_df: pd.DataFra
     st.markdown('<div style="height: 1.5rem;"></div>', unsafe_allow_html=True)
     st.markdown("""
     <div class="panel-container">
-        <div class="panel-title">Air Quality Index Trendline</div>
-        <div class="panel-desc">Multi-step recursive projection mapping discrete atmospheric severity (1=Good to 5=Very Poor).</div>
+        <div class="panel-title">Air Quality Index Projection (Next 3 Days)</div>
+        <div class="panel-desc">Multi-step recursive projection for Multan across the upcoming 72-hour period (1=Good to 5=Very Poor).</div>
     """, unsafe_allow_html=True)
 
     fig = create_trend_chart(predictions_df, theme_mode)
@@ -1029,7 +1062,48 @@ def render_model_comparison_page(comparison_df: pd.DataFrame, theme_mode: str):
     for metric in ['Macro F1', 'Accuracy', 'Precision', 'Recall']:
         display_df[metric] = display_df[metric].apply(lambda x: f"{float(x):.4f}")
 
-    st.dataframe(display_df, use_container_width=True, hide_index=True)
+    table_rows = []
+    for _, row in display_df.iterrows():
+        is_champ = row['Deployment Status'] == "Champion"
+        status_badge = (
+            '<span class="badge" style="background-color: var(--accent-subtle); color: var(--accent-primary); border: 1.5px solid var(--border-focus); font-weight: 700;">Champion</span>'
+            if is_champ else
+            '<span class="badge badge-neutral">Candidate</span>'
+        )
+        row_bg = "background-color: var(--bg-surface-elevated);" if is_champ else ""
+        row_weight = "font-weight: 700;" if is_champ else "font-weight: 500;"
+
+        table_rows.append(f"""
+            <tr style="border-bottom: 1px solid var(--border-subtle); {row_bg}">
+                <td style="padding: 0.85rem 1rem; {row_weight} color: var(--text-primary);">{row['Model Architecture']}</td>
+                <td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row['Macro F1']}</td>
+                <td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row['Accuracy']}</td>
+                <td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row['Precision']}</td>
+                <td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row['Recall']}</td>
+                <td style="padding: 0.85rem 1rem;">{status_badge}</td>
+            </tr>
+        """)
+
+    table_html = f"""
+    <div style="overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: 10px; background-color: var(--bg-surface);">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.86rem; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-subtle); background-color: var(--bg-surface-elevated); color: var(--text-primary);">
+                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Model Architecture</th>
+                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Macro F1</th>
+                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Accuracy</th>
+                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Precision</th>
+                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Recall</th>
+                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Deployment Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {''.join(table_rows)}
+            </tbody>
+        </table>
+    </div>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Engineering Insights Card
@@ -1251,7 +1325,7 @@ def main():
                 <span class="badge badge-live">Operational Feed</span>
             </div>
             <h1 class="page-title">Air Quality Intelligence Dashboard</h1>
-            <div class="page-subtitle">72-Hour recursive multi-model machine learning forecast system</div>
+            <div class="page-subtitle">Predicting the average Air Quality Index (AQI) of Multan for the next 3 days</div>
         </div>
         <div class="header-meta">
             <span class="badge badge-neutral">📅 {formatted_time}</span>
