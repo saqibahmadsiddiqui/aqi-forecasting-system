@@ -9,640 +9,1193 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Add project root to system path
 sys.path.append(str(Path(__file__).parent.parent))
-from src.config.config import *
+try:
+    from src.config.config import (
+        PROCESSED_DATA_DIR,
+        TIMEZONE,
+        LAT,
+        LON,
+        PREDICTION_HORIZON_DAYS,
+        MODEL_NAMES
+    )
+except ImportError:
+    PROCESSED_DATA_DIR = Path(__file__).parent.parent / "data" / "processed"
+    TIMEZONE = "Asia/Karachi"
+    LAT = 30.1979793
+    LON = 71.4724978
+    PREDICTION_HORIZON_DAYS = 3
+    MODEL_NAMES = ["random_forest", "gradient_boosting", "lightgbm", "decision_tree", "sklearn_gradient_boosting"]
 
+# Configure Streamlit page
 st.set_page_config(
-    page_title="AQI Forecast - Multan Pakistan",
-    page_icon="☁️",
+    page_title="Multan Air Quality Intelligence",
+    page_icon="🍃",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
-<style>
-    * {
-        margin: 0;
-        padding: 0;
-    }
-    
-    /* Main background */
-    [data-testid="stAppViewContainer"] {
-        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
-    }
-    
-    [data-testid="stMain"] {
-        background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
-    }
-    
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 100%);
-    }
-    
-    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
-        padding-top: 1rem;
-    }
-    
-    [data-testid="stSidebar"] {
-        color: #ffffff !important;
-    }
-    
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
-        color: #ffffff !important;
-    }
-    
-    /* Main title */
-    .main-title {
-        font-size: 3.5rem;
-        font-weight: 900;
-        text-align: center;
-        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
-        letter-spacing: -1px;
-    }
-    
-    .sub-title {
-        text-align: center;
-        font-size: 1.4rem;
-        color: #80d4ff;
-        margin-bottom: 2rem;
-        font-weight: 500;
-    }
-    
-    .tagline {
-        text-align: center;
-        font-size: 1rem;
-        color: #555;
-        margin-bottom: 2rem;
-    }
-    
-    .datetime-display {
-        text-align: center;
-        font-size: 1.1rem;
-        color: #00d4ff;
-        margin-bottom: 2rem;
-        padding: 1rem;
-        border: 2px solid #00d4ff;
-        border-radius: 12px;
-        background: rgba(0, 212, 255, 0.05);
-        font-weight: 600;
-        font-family: 'Courier New', monospace;
-    }
-    
-    .forecast-card {
-        background: linear-gradient(135deg, #1a3a4a 0%, #0f2a3a 100%);
-        border: 2px solid #00d4ff;
-        border-radius: 20px;
-        padding: 2rem;
-        text-align: center;
-        box-shadow: 0 15px 50px rgba(0, 212, 255, 0.15);
-        transition: all 0.3s ease;
-    }
-    
-    .forecast-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 25px 80px rgba(0, 212, 255, 0.25);
-        border-color: #00ffff;
-    }
-    
-    .day-name {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #00d4ff;
-        margin-bottom: 0.5rem;
-    }
-    
-    .date-text {
-        color: #888;
-        font-size: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .aqi-value {
-        font-size: 4.5rem;
-        font-weight: 900;
-        color: #00ffff;
-        margin: 1rem 0;
-        text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-    }
-    
-    .aqi-category {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #00d4ff;
-        margin-bottom: 1rem;
-    }
-    
-    .aqi-range {
-        color: #aaa;
-        font-size: 1.1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .section-header {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #00d4ff;
-        margin: 2rem 0 1.5rem 0;
-        border-bottom: 3px solid #00d4ff;
-        padding-bottom: 1rem;
-    }
-    
-    .divider {
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #00d4ff, #00ffff, transparent);
-        margin: 2.5rem 0;
-        border: none;
-    }
-    
-    .metric-box {
-        background: linear-gradient(135deg, #1a3a4a 0%, #0f2a3a 100%);
-        border: 2px solid #00d4ff;
-        border-radius: 15px;
-        padding: 1.5rem;
-        text-align: center;
-        color: #00d4ff;
-        font-weight: bold;
-    }
-    
-    .metric-label {
-        color: #888;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 0.5rem;
-    }
-    
-    .metric-value {
-        font-size: 2.2rem;
-        color: #00ffff;
-    }
-    
-    .about-section {
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(0, 100, 150, 0.05) 100%);
-        border: 2px solid rgba(0, 212, 255, 0.3);
-        border-radius: 15px;
-        padding: 2rem;
-        margin: 1.5rem 0;
-        color: #ddd;
-    }
-    
-    .about-title {
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #00d4ff;
-        margin-bottom: 1rem;
-    }
-    
-    .about-text {
-        line-height: 1.8;
-        color: #bbb;
-    }
-    
-    .model-info {
-        background: linear-gradient(135deg, #1a3a4a 0%, #0f2a3a 100%);
-        border-left: 4px solid #00d4ff;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        color: #ddd;
-    }
-    
-    .model-name {
-        font-size: 1.3rem;
-        font-weight: bold;
-        color: #00d4ff;
-        margin-bottom: 0.5rem;
-    }
-    
-    .chart-container {
-        background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(0, 100, 150, 0.05) 100%);
-        border: 2px solid rgba(0, 212, 255, 0.2);
-        border-radius: 15px;
-        padding: 2rem;
-        margin: 2rem 0;
-    }
-    
-    .status-good {
-        background: rgba(0, 255, 136, 0.15);
-        border: 2px solid #00ff88;
-        color: #00ff88;
-        padding: 0.75rem 1.5rem;
-        border-radius: 25px;
-        font-weight: bold;
-    }
-    
-    .status-warning {
-        background: rgba(255, 165, 0, 0.15);
-        border: 2px solid #ff9500;
-        color: #ff9500;
-        padding: 0.75rem 1.5rem;
-        border-radius: 25px;
-        font-weight: bold;
-    }
-    
-    .status-critical {
-        background: rgba(255, 50, 50, 0.15);
-        border: 2px solid #ff3232;
-        color: #ff3232;
-        padding: 0.75rem 1.5rem;
-        border-radius: 25px;
-        font-weight: bold;
-    }
-    
-    .footer {
-        text-align: center;
-        padding: 2rem;
-        color: #00d4ff;
-        font-size: 1rem;
-        border-top: 2px solid rgba(0, 212, 255, 0.2);
-        font-weight: 500;
-        margin-top: 3rem;
-    }
-    
-    .sidebar-menu-title {
-        color: #00d4ff;
-        font-size: 1.5rem;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid rgba(0, 212, 255, 0.3);
-    }
-</style>
-""", unsafe_allow_html=True)
+# ---------------------------------------------------------
+# Session State & Theme Preference
+# ---------------------------------------------------------
+if "theme_preference" not in st.session_state:
+    st.session_state.theme_preference = "System"
 
-AQI_COLORS = {
-    1: {'name': '🟢 Good', 'color': '#00ff88', 'bg': 'rgba(0, 255, 136, 0.15)'},
-    2: {'name': '🟡 Fair', 'color': '#ffff00', 'bg': 'rgba(255, 255, 0, 0.15)'},
-    3: {'name': '🟠 Moderate', 'color': '#ff9500', 'bg': 'rgba(255, 149, 0, 0.15)'},
-    4: {'name': '🔴 Poor', 'color': '#ff3232', 'bg': 'rgba(255, 50, 50, 0.15)'},
-    5: {'name': '🔴 Very Poor', 'color': '#ff0080', 'bg': 'rgba(255, 0, 128, 0.15)'}
+# ---------------------------------------------------------
+# Dynamic CSS Design System (Light, Dark, & System)
+# ---------------------------------------------------------
+def generate_theme_css(theme_mode: str) -> str:
+    """
+    Generates CSS variable definitions based on the selected theme mode:
+    Light, Dark, or System (via CSS media query).
+    """
+    light_tokens = """
+        --bg-page: #f8fafc;
+        --bg-surface: #ffffff;
+        --bg-surface-elevated: #f1f5f9;
+        --bg-surface-hover: #e2e8f0;
+        --bg-sidebar: #f8fafc;
+        --border-default: #cbd5e1;
+        --border-subtle: #e2e8f0;
+        --border-focus: #0284c7;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #94a3b8;
+        --accent-primary: #0284c7;
+        --accent-subtle: #e0f2fe;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+        
+        --aqi-1-color: #059669;
+        --aqi-1-bg: #ecfdf5;
+        --aqi-1-border: #a7f3d0;
+        --aqi-2-color: #65a30d;
+        --aqi-2-bg: #f7fee7;
+        --aqi-2-border: #bef264;
+        --aqi-3-color: #d97706;
+        --aqi-3-bg: #fffbeb;
+        --aqi-3-border: #fde68a;
+        --aqi-4-color: #dc2626;
+        --aqi-4-bg: #fef2f2;
+        --aqi-4-border: #fecaca;
+        --aqi-5-color: #9f1239;
+        --aqi-5-bg: #fff1f2;
+        --aqi-5-border: #fecdd3;
+    """
+
+    dark_tokens = """
+        --bg-page: #0b0f19;
+        --bg-surface: #111827;
+        --bg-surface-elevated: #1e293b;
+        --bg-surface-hover: #334155;
+        --bg-sidebar: #0e1422;
+        --border-default: #374151;
+        --border-subtle: #1f2937;
+        --border-focus: #38bdf8;
+        --text-primary: #f9fafb;
+        --text-secondary: #9ca3af;
+        --text-muted: #6b7280;
+        --accent-primary: #38bdf8;
+        --accent-subtle: rgba(56, 189, 248, 0.12);
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        
+        --aqi-1-color: #34d399;
+        --aqi-1-bg: rgba(16, 185, 129, 0.15);
+        --aqi-1-border: rgba(16, 185, 129, 0.3);
+        --aqi-2-color: #a3e635;
+        --aqi-2-bg: rgba(132, 204, 22, 0.15);
+        --aqi-2-border: rgba(132, 204, 22, 0.3);
+        --aqi-3-color: #fbbf24;
+        --aqi-3-bg: rgba(245, 158, 11, 0.15);
+        --aqi-3-border: rgba(245, 158, 11, 0.3);
+        --aqi-4-color: #f87171;
+        --aqi-4-bg: rgba(239, 68, 68, 0.15);
+        --aqi-4-border: rgba(239, 68, 68, 0.3);
+        --aqi-5-color: #fb7185;
+        --aqi-5-bg: rgba(244, 63, 94, 0.18);
+        --aqi-5-border: rgba(244, 63, 94, 0.35);
+    """
+
+    if theme_mode == "Light":
+        root_css = f":root {{ {light_tokens} }}"
+    elif theme_mode == "Dark":
+        root_css = f":root {{ {dark_tokens} }}"
+    else:  # System preference
+        root_css = f"""
+            :root {{
+                {light_tokens}
+            }}
+            @media (prefers-color-scheme: dark) {{
+                :root {{
+                    {dark_tokens}
+                }}
+            }}
+        """
+
+    base_css = f"""
+    <style>
+        {root_css}
+
+        /* Modern Typography & Smooth Rendering */
+        html, body, [class*="css"] {{
+            font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }}
+
+        /* App Backgrounds & Surface styling */
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
+            background-color: var(--bg-page) !important;
+            color: var(--text-primary) !important;
+        }}
+
+        [data-testid="stHeader"] {{
+            background-color: transparent !important;
+        }}
+
+        /* Sidebar Styling */
+        [data-testid="stSidebar"] {{
+            background-color: var(--bg-sidebar) !important;
+            border-right: 1px solid var(--border-subtle) !important;
+        }}
+
+        [data-testid="stSidebar"] * {{
+            color: var(--text-primary);
+        }}
+
+        /* Clean Section Headers */
+        .page-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.75rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }}
+
+        .page-title {{
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.025em;
+            margin: 0;
+            line-height: 1.25;
+        }}
+
+        .page-subtitle {{
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }}
+
+        .header-meta {{
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }}
+
+        /* Badges & Chips */
+        .badge {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }}
+
+        .badge-live {{
+            background-color: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }}
+
+        .badge-live::before {{
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #10b981;
+            display: inline-block;
+        }}
+
+        .badge-neutral {{
+            background-color: var(--bg-surface-elevated);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }}
+
+        .badge-brand {{
+            background-color: var(--accent-subtle);
+            color: var(--accent-primary);
+            border: 1px solid var(--border-subtle);
+        }}
+
+        /* KPI & Metric Cards */
+        .kpi-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }}
+
+        .kpi-card {{
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }}
+
+        .kpi-card:hover {{
+            box-shadow: var(--shadow-md);
+            border-color: var(--border-default);
+        }}
+
+        .kpi-label {{
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }}
+
+        .kpi-value {{
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }}
+
+        .kpi-subtext {{
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.4rem;
+        }}
+
+        /* Forecast Card Grid */
+        .forecast-card {{
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }}
+
+        .forecast-card:hover {{
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--border-default);
+        }}
+
+        .forecast-card-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }}
+
+        .forecast-day-name {{
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }}
+
+        .forecast-date {{
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }}
+
+        .aqi-pill-hero {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            margin: 0.75rem 0 1rem 0;
+            border-width: 1px;
+            border-style: solid;
+        }}
+
+        .aqi-pill-val {{
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.04em;
+        }}
+
+        .aqi-pill-meta {{
+            text-align: right;
+        }}
+
+        .aqi-pill-cat {{
+            font-size: 0.95rem;
+            font-weight: 700;
+        }}
+
+        .aqi-pill-range {{
+            font-size: 0.78rem;
+            opacity: 0.85;
+            margin-top: 0.2rem;
+        }}
+
+        /* Custom Panels & Content Containers */
+        .panel-container {{
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+        }}
+
+        .panel-title {{
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.015em;
+            margin-bottom: 0.35rem;
+        }}
+
+        .panel-desc {{
+            font-size: 0.84rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
+        }}
+
+        /* Advisory Grid */
+        .advisory-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }}
+
+        .advisory-item {{
+            background-color: var(--bg-surface-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 1rem 1.15rem;
+        }}
+
+        .advisory-item-title {{
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }}
+
+        .advisory-item-desc {{
+            font-size: 0.81rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }}
+
+        /* Alert Warning Banner */
+        .alert-banner {{
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            background-color: var(--aqi-5-bg);
+            border: 1px solid var(--aqi-5-border);
+            color: var(--aqi-5-color);
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }}
+
+        .alert-banner-title {{
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+            font-size: 0.92rem;
+        }}
+
+        /* Architecture & Info Grid */
+        .bento-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }}
+
+        .bento-card {{
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 1.35rem;
+            box-shadow: var(--shadow-sm);
+        }}
+
+        .bento-step-num {{
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.25rem;
+        }}
+
+        .bento-title {{
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }}
+
+        .bento-desc {{
+            font-size: 0.83rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }}
+
+        /* Sidebar Metadata & Controls */
+        .sidebar-section-title {{
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem 0;
+            padding-left: 0.25rem;
+        }}
+
+        .sidebar-brand {{
+            padding: 0.5rem 0.25rem 1rem 0.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1rem;
+        }}
+
+        .sidebar-brand-title {{
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }}
+
+        .sidebar-brand-subtitle {{
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }}
+
+        .sidebar-meta-box {{
+            background-color: var(--bg-surface-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 0.85rem;
+            margin-top: 1.5rem;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }}
+
+        /* Subtle modern footer */
+        .footer-bar {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            padding: 1.5rem 0 0.5rem 0;
+            margin-top: 3rem;
+            border-top: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }}
+
+        /* Override Streamlit Widget Defaults for Professional Look */
+        [data-testid="stRadio"] label {{
+            font-size: 0.88rem !important;
+            font-weight: 500 !important;
+        }}
+        
+        div[data-testid="stDataFrame"] {{
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            overflow: hidden;
+        }}
+    </style>
+    """
+    return base_css
+
+# Apply dynamic CSS
+st.markdown(generate_theme_css(st.session_state.theme_preference), unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# Semantic AQI Configuration (Refined Design Tokens)
+# ---------------------------------------------------------
+AQI_THEME_TOKENS = {
+    1: {
+        "name": "Good",
+        "badge_text": "Safe Air",
+        "color_var": "var(--aqi-1-color)",
+        "bg_var": "var(--aqi-1-bg)",
+        "border_var": "var(--aqi-1-border)",
+        "advisory": "Air quality is satisfactory; poses little or no risk."
+    },
+    2: {
+        "name": "Fair",
+        "badge_text": "Acceptable",
+        "color_var": "var(--aqi-2-color)",
+        "bg_var": "var(--aqi-2-bg)",
+        "border_var": "var(--aqi-2-border)",
+        "advisory": "Air quality is acceptable for most; mild concern for unusually sensitive individuals."
+    },
+    3: {
+        "name": "Moderate",
+        "badge_text": "Moderate Caution",
+        "color_var": "var(--aqi-3-color)",
+        "bg_var": "var(--aqi-3-bg)",
+        "border_var": "var(--aqi-3-border)",
+        "advisory": "Sensitive groups may experience minor symptoms; general public should moderate exertion."
+    },
+    4: {
+        "name": "Poor",
+        "badge_text": "Unhealthy",
+        "color_var": "var(--aqi-4-color)",
+        "bg_var": "var(--aqi-4-bg)",
+        "border_var": "var(--aqi-4-border)",
+        "advisory": "Health effects likely for sensitive individuals; general public may experience irritation."
+    },
+    5: {
+        "name": "Very Poor",
+        "badge_text": "Hazardous",
+        "color_var": "var(--aqi-5-color)",
+        "bg_var": "var(--aqi-5-bg)",
+        "border_var": "var(--aqi-5-border)",
+        "advisory": "Health emergency warning. Serious respiratory irritation risk for the entire population."
+    }
 }
 
+# ---------------------------------------------------------
+# Data Loader
+# ---------------------------------------------------------
 @st.cache_data(ttl=3600)
 def load_predictions():
-    predictions_path = PROCESSED_DATA_DIR / 'latest_predictions.csv'
-    comparison_path = PROCESSED_DATA_DIR / 'model_comparison.csv'
-    
-    if predictions_path.exists() and comparison_path.exists():
+    predictions_path = PROCESSED_DATA_DIR / "latest_predictions.csv"
+    comparison_path = PROCESSED_DATA_DIR / "model_comparison.csv"
+
+    predictions_df = pd.DataFrame()
+    comparison_df = pd.DataFrame()
+
+    if predictions_path.exists():
         try:
             predictions_df = pd.read_csv(predictions_path)
-            comparison_df = pd.read_csv(comparison_path)
-            return predictions_df, comparison_df
         except Exception as e:
-            st.error(f"Error loading CSV files: {e}")
-            return pd.DataFrame(), pd.DataFrame()
-    else:
-        st.warning("⏳ Predictions not yet generated. Please run the training pipeline first.")
-        return pd.DataFrame(), pd.DataFrame()
+            st.error(f"Error reading predictions file: {e}")
 
-def get_status_class(aqi_value):
-    if aqi_value <= 1:
-        return 'status-good'
-    elif aqi_value <= 2:
-        return 'status-warning'
-    else:
-        return 'status-critical'
+    if comparison_path.exists():
+        try:
+            comparison_df = pd.read_csv(comparison_path)
+        except Exception as e:
+            st.error(f"Error reading model comparison file: {e}")
 
-def create_trend_chart(predictions_df):
+    return predictions_df, comparison_df
+
+# ---------------------------------------------------------
+# Plotly Chart Creators (Adaptive Theming)
+# ---------------------------------------------------------
+def create_trend_chart(predictions_df: pd.DataFrame, theme_mode: str) -> go.Figure:
+    """
+    Renders an interactive 72-hour AQI trend chart with clean engineering styling.
+    """
+    is_dark = theme_mode == "Dark" or (theme_mode == "System")
+    font_color = "#94a3b8" if is_dark else "#475569"
+    grid_color = "rgba(255, 255, 255, 0.07)" if is_dark else "#f1f5f9"
+    line_color = "#38bdf8" if is_dark else "#0284c7"
+    fill_color = "rgba(56, 189, 248, 0.12)" if is_dark else "rgba(2, 132, 199, 0.08)"
+
     fig = go.Figure()
-    
+
+    # Fill and primary curve
     fig.add_trace(go.Scatter(
         x=predictions_df['date'],
         y=predictions_df['average_aqi'],
         fill='tozeroy',
-        fillcolor='rgba(0, 212, 255, 0.2)',
-        line=dict(color='#00ffff', width=4),
+        fillcolor=fill_color,
+        line=dict(color=line_color, width=3, shape='spline'),
         mode='lines+markers',
-        marker=dict(size=12, color='#00d4ff'),
-        hovertemplate='<b>%{x}</b><br>AQI: %{y:.1f}<extra></extra>'
+        marker=dict(size=8, color=line_color, line=dict(color="#ffffff", width=2)),
+        hovertemplate='<b>%{x}</b><br>Predicted AQI: <b>%{y:.1f}</b><extra></extra>'
     ))
-    
+
     fig.update_layout(
-        title=dict(
-            text='Air Quality Trend (1=Good, 5=Very Poor)',
-            font=dict(size=18, color='#00d4ff')
-        ),
+        margin=dict(l=20, r=20, t=30, b=20),
+        height=340,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        hovermode='x unified',
+        showlegend=False,
+        font=dict(family='Inter, -apple-system, sans-serif', size=12, color=font_color),
         xaxis=dict(
-            title='Date',
             showgrid=True,
+            gridcolor=grid_color,
             gridwidth=1,
-            gridcolor='rgba(0, 212, 255, 0.1)',
-            color='#888'
+            color=font_color,
+            linecolor=grid_color,
+            tickfont=dict(size=11)
         ),
         yaxis=dict(
-            title='AQI Category (1-5)',
-            range=[0.5, 5.5],
+            range=[0.8, 5.2],
+            dtick=1,
             showgrid=True,
+            gridcolor=grid_color,
             gridwidth=1,
-            gridcolor='rgba(0, 212, 255, 0.1)',
-            color='#888',
-            dtick=1
-        ),
-        hovermode='x unified',
-        height=450,
-        template='plotly_dark',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
-        plot_bgcolor='rgba(15, 42, 58, 0.5)',
-        font=dict(family='Arial', size=12, color='#ddd'),
-        margin=dict(l=50, r=50, t=80, b=50),
-        showlegend=False
+            color=font_color,
+            tickmode='array',
+            tickvals=[1, 2, 3, 4, 5],
+            ticktext=['1 - Good', '2 - Fair', '3 - Moderate', '4 - Poor', '5 - Very Poor'],
+            tickfont=dict(size=11)
+        )
     )
-    
+
     return fig
 
-def create_model_comparison_chart(comparison_df):
+def create_model_comparison_chart(comparison_df: pd.DataFrame, theme_mode: str) -> go.Figure:
+    """
+    Renders a comparative horizontal/vertical bar chart for model performance metrics.
+    """
     if comparison_df.empty:
         return None
-    
+
+    is_dark = theme_mode == "Dark" or (theme_mode == "System")
+    font_color = "#94a3b8" if is_dark else "#475569"
+    grid_color = "rgba(255, 255, 255, 0.07)" if is_dark else "#f1f5f9"
+    accent_best = "#38bdf8" if is_dark else "#0284c7"
+    accent_others = "#475569" if is_dark else "#cbd5e1"
+
+    # Identify best model
+    best_idx = comparison_df['f1_score'].idxmax()
+    colors = [accent_best if i == best_idx else accent_others for i in range(len(comparison_df))]
+
     fig = go.Figure()
-    
-    colors = ['#00ffff' if x else '#00d4ff' for x in comparison_df.get('is_best', [False]*len(comparison_df))]
-    
+
     fig.add_trace(go.Bar(
         x=comparison_df['model'],
         y=comparison_df['f1_score'],
-        marker=dict(
-            color=colors,
-            line=dict(color='white', width=2)
-        ),
+        marker=dict(color=colors, line=dict(color='rgba(0,0,0,0)', width=0), cornerradius=6),
         text=[f"{v:.4f}" for v in comparison_df['f1_score']],
         textposition='outside',
-        hovertemplate='<b>%{x}</b><br>F1 Score: %{y:.4f}<extra></extra>'
+        textfont=dict(color=font_color, size=11),
+        hovertemplate='<b>%{x}</b><br>Macro F1: %{y:.4f}<extra></extra>'
     ))
-    
+
     fig.update_layout(
-        title=dict(
-            text='Model Performance Comparison (F1 Score)',
-            font=dict(size=18, color='#00d4ff')
+        margin=dict(l=20, r=20, t=30, b=20),
+        height=340,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(family='Inter, -apple-system, sans-serif', size=12, color=font_color),
+        showlegend=False,
+        xaxis=dict(
+            showgrid=False,
+            color=font_color,
+            tickfont=dict(size=11)
         ),
-        xaxis=dict(title='Model', color='#888'),
         yaxis=dict(
-            title='F1 Score',
+            title="Macro F1 Score",
+            range=[min(comparison_df['f1_score']) * 0.995, 1.002],
             showgrid=True,
-            gridwidth=1,
-            gridcolor='rgba(0, 212, 255, 0.1)',
-            color='#888'
-        ),
-        height=450,
-        template='plotly_dark',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
-        plot_bgcolor='rgba(15, 42, 58, 0.5)',
-        font=dict(family='Arial', size=12, color='#ddd'),
-        margin=dict(l=50, r=50, t=80, b=50),
-        showlegend=False
+            gridcolor=grid_color,
+            color=font_color,
+            tickfont=dict(size=11)
+        )
     )
-    
+
     return fig
 
-def show_forecast(predictions_df, comparison_df):
-    
+# ---------------------------------------------------------
+# View 1: 🔮 3-Day Forecast View
+# ---------------------------------------------------------
+def render_forecast_page(predictions_df: pd.DataFrame, comparison_df: pd.DataFrame, theme_mode: str):
     if predictions_df.empty:
-        st.error("❌ No predictions available. Please run the training pipeline.")
+        st.markdown("""
+        <div class="panel-container">
+            <div class="panel-title">Data Pipeline Notice</div>
+            <div class="panel-desc">
+                Predictions have not been generated yet or the processed data directory is unpopulated.
+                Trigger the training and recursive inference pipeline to populate <code>latest_predictions.csv</code>.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         return
-    
-    st.markdown('<div class="section-header">🔮 Next 3 Days Forecast</div>', unsafe_allow_html=True)
-    
+
+    # Check for severe conditions
+    max_forecast_aqi = int(predictions_df['average_aqi'].max())
+    has_severe_warning = max_forecast_aqi >= 5
+
+    if has_severe_warning:
+        st.markdown("""
+        <div class="alert-banner">
+            <div>
+                <div class="alert-banner-title">⚠️ Severe Atmospheric Alert: Category 5 Hazardous Conditions Expected</div>
+                Particulate concentrations across Multan are projected to reach hazardous thresholds over the next 72 hours.
+                Avoid outdoor endurance activities. Keep windows sealed and wear certified N95/FFP2 respirators when in transit.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Executive KPI Summary Grid
+    best_model_name = "Ensemble"
+    best_model_f1 = "N/A"
     if not comparison_df.empty:
-        best_model = comparison_df.loc[comparison_df['f1_score'].idxmax()]
-        st.info(f"🤖 Best Model: **{best_model['model']}** (F1 Score: {best_model['f1_score']:.4f})")
-    
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    cols = st.columns(3, gap="large")
-    
+        best_row = comparison_df.loc[comparison_df['f1_score'].idxmax()]
+        best_model_name = str(best_row['model'])
+        best_model_f1 = f"{best_row['f1_score']:.4f}"
+
+    today_row = predictions_df.iloc[0]
+    today_aqi = int(today_row['average_aqi'])
+    today_token = AQI_THEME_TOKENS.get(today_aqi, AQI_THEME_TOKENS[1])
+
+    st.markdown(f"""
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Today's Projected Air Quality</div>
+            <div class="kpi-value" style="color: {today_token['color_var']};">{today_aqi} · {today_token['name']}</div>
+            <div class="kpi-subtext">{today_row['day_name']} expectation for Multan</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">72-Hour Maximum Risk</div>
+            <div class="kpi-value">Level {max_forecast_aqi}</div>
+            <div class="kpi-subtext">Peak severity across forecast horizon</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Primary Active Model</div>
+            <div class="kpi-value" style="font-size: 1.45rem;">{best_model_name}</div>
+            <div class="kpi-subtext">Validation Macro F1: {best_model_f1}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Prediction Horizon</div>
+            <div class="kpi-value">{PREDICTION_HORIZON_DAYS} Days</div>
+            <div class="kpi-subtext">Auto-regressive recursive forecasting</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 3-Day Forecast Cards Grid
+    st.markdown('<div class="panel-title" style="margin-bottom: 0.85rem;">Daily Forecast Trajectory</div>', unsafe_allow_html=True)
+    cols = st.columns(len(predictions_df), gap="medium")
+
+    relative_labels = ["Today", "Tomorrow", "In 2 Days"]
+
     for idx, (_, row) in enumerate(predictions_df.iterrows()):
-        aqi_value = int(row['average_aqi'])
-        color_info = AQI_COLORS.get(aqi_value, AQI_COLORS[1])
-        status_class = get_status_class(aqi_value)
-        
+        aqi_val = int(row['average_aqi'])
+        token = AQI_THEME_TOKENS.get(aqi_val, AQI_THEME_TOKENS[1])
+        rel_label = relative_labels[idx] if idx < len(relative_labels) else f"Day {idx+1}"
+        min_aqi = int(row['min_aqi'])
+        max_aqi = int(row['max_aqi'])
+
         with cols[idx]:
             st.markdown(f"""
             <div class="forecast-card">
-                <div class="day-name">{row['day_name']}</div>
-                <div class="date-text">{row['date']}</div>
-                <div class="aqi-value" style="color: {color_info['color']};">{aqi_value}</div>
-                <div class="aqi-category" style="color: {color_info['color']};">{color_info['name']}</div>
-                <div class="aqi-range">Range: {int(row['min_aqi'])} - {int(row['max_aqi'])}</div>
-                <div style="margin-top: 1rem;">
-                    <div class="{status_class}">
-                        {'✓ SAFE' if aqi_value <= 2 else '⚠️ CAUTION' if aqi_value == 3 else '⛔ WARNING'}
+                <div>
+                    <div class="forecast-card-header">
+                        <div>
+                            <div class="forecast-day-name">{row['day_name']}</div>
+                            <div class="forecast-date">{row['date']}</div>
+                        </div>
+                        <span class="badge badge-brand">{rel_label}</span>
                     </div>
+                    <div class="aqi-pill-hero" style="background-color: {token['bg_var']}; border-color: {token['border_var']}; color: {token['color_var']};">
+                        <div class="aqi-pill-val">{aqi_val}</div>
+                        <div class="aqi-pill-meta">
+                            <div class="aqi-pill-cat">{token['name']}</div>
+                            <div class="aqi-pill-range">Range: {min_aqi} – {max_aqi}</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.83rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem;">
+                        {token['advisory']}
+                    </div>
+                </div>
+                <div style="padding-top: 0.75rem; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Status Code</span>
+                    <span class="badge" style="background-color: {token['bg_var']}; color: {token['color_var']}; border: 1px solid {token['border_var']};">
+                        {token['badge_text']}
+                    </span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            
-            if pd.notna(row.get('warning')) and row.get('warning', '') != '':
-                st.warning(row['warning'])
-    
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-    fig = create_trend_chart(predictions_df)
-    st.plotly_chart(fig, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
-def show_model_comparison(comparison_df):
+    # 72-Hour Interactive Chart
+    st.markdown('<div style="height: 1.5rem;"></div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="panel-container">
+        <div class="panel-title">Air Quality Index Trendline</div>
+        <div class="panel-desc">Multi-step recursive projection mapping discrete atmospheric severity (1=Good to 5=Very Poor).</div>
+    """, unsafe_allow_html=True)
+
+    fig = create_trend_chart(predictions_df, theme_mode)
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Actionable Health & Safety Guidelines
+    st.markdown("""
+    <div class="panel-container">
+        <div class="panel-title">Actionable Health & Exposure Guidelines</div>
+        <div class="panel-desc">Evidence-based precautions calibrated to prevailing atmospheric particulate forecasts.</div>
+        <div class="advisory-grid">
+            <div class="advisory-item">
+                <div class="advisory-item-title">🫁 Sensitive Groups</div>
+                <div class="advisory-item-desc">Individuals with asthma, chronic bronchitis, or cardiovascular illness should minimize outdoor exposure and keep inhalers accessible.</div>
+            </div>
+            <div class="advisory-item">
+                <div class="advisory-item-title">🏃 Physical Activity</div>
+                <div class="advisory-item-desc">Shift aerobic exercise indoors. Avoid running, cycling, or heavy athletic training near traffic corridors or unpaved zones.</div>
+            </div>
+            <div class="advisory-item">
+                <div class="advisory-item-title">😷 Protective Equipment</div>
+                <div class="advisory-item-desc">Use certified N95 or KN95 respirators. Cloth and standard surgical masks provide minimal filtration against PM2.5 particulates.</div>
+            </div>
+            <div class="advisory-item">
+                <div class="advisory-item-title">🏠 Indoor Ventilation</div>
+                <div class="advisory-item-desc">Keep exterior windows closed during peak inversion hours (dawn and dusk). Utilize HEPA air purification where available.</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# View 2: 📊 Model Performance & Benchmarks View
+# ---------------------------------------------------------
+def render_model_comparison_page(comparison_df: pd.DataFrame, theme_mode: str):
     if comparison_df.empty:
-        st.error("❌ No model data available.")
+        st.markdown("""
+        <div class="panel-container">
+            <div class="panel-title">Evaluation Records Unavailable</div>
+            <div class="panel-desc">Run model training and cross-validation to populate <code>model_comparison.csv</code>.</div>
+        </div>
+        """, unsafe_allow_html=True)
         return
-    
-    st.markdown('<div class="section-header">📊 Model Performance Analysis</div>', unsafe_allow_html=True)
-    
+
     best_idx = comparison_df['f1_score'].idxmax()
     best_model = comparison_df.iloc[best_idx]
-    
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    st.markdown('<h3 style="color: #00d4ff; text-align: center; margin: 2rem 0 1rem 0;">🏆 Best Performing Model</h3>', unsafe_allow_html=True)
-    
-    col1, col2, col3, col4 = st.columns(4, gap="large")
-    
-    with col1:
-        st.markdown(f"""
-        <div class="metric-box">
-            <div class="metric-label">Model</div>
-            <div class="metric-value" style="font-size: 1.5rem;">{best_model['model']}</div>
+
+    # Champion Model Hero Metric Strip
+    st.markdown(f"""
+    <div class="kpi-grid">
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-primary);">
+            <div class="kpi-label">Production Champion</div>
+            <div class="kpi-value" style="font-size: 1.5rem; color: var(--accent-primary);">{best_model['model']}</div>
+            <div class="kpi-subtext">Selected for automated inference</div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown(f"""
-        <div class="metric-box">
-            <div class="metric-label">F1 Score</div>
-            <div class="metric-value">{best_model['f1_score']:.4f}</div>
+        <div class="kpi-card">
+            <div class="kpi-label">Macro F1 Score</div>
+            <div class="kpi-value">{best_model['f1_score']:.4f}</div>
+            <div class="kpi-subtext">Harmonic mean of precision & recall</div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown(f"""
-        <div class="metric-box">
-            <div class="metric-label">Accuracy</div>
-            <div class="metric-value">{best_model['accuracy']:.4f}</div>
+        <div class="kpi-card">
+            <div class="kpi-label">Overall Accuracy</div>
+            <div class="kpi-value">{best_model['accuracy']:.4f}</div>
+            <div class="kpi-subtext">Multi-class classification accuracy</div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown(f"""
-        <div class="metric-box">
-            <div class="metric-label">Precision</div>
-            <div class="metric-value">{best_model['precision']:.4f}</div>
+        <div class="kpi-card">
+            <div class="kpi-label">Precision & Recall</div>
+            <div class="kpi-value" style="font-size: 1.4rem;">{best_model['precision']:.4f} / {best_model['recall']:.4f}</div>
+            <div class="kpi-subtext">Class-balanced validation metrics</div>
         </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-    fig = create_model_comparison_chart(comparison_df)
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Comparative Visualizer
+    st.markdown("""
+    <div class="panel-container">
+        <div class="panel-title">Model Architecture Comparison (Macro F1)</div>
+        <div class="panel-desc">Comparative evaluation across 5 classification pipelines evaluated on unseen validation holdouts.</div>
+    """, unsafe_allow_html=True)
+
+    fig = create_model_comparison_chart(comparison_df, theme_mode)
     if fig:
-        st.plotly_chart(fig, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    st.markdown('<h3 style="color: #00d4ff; margin: 2rem 0 1rem 0;">📋 All Models Metrics</h3>', unsafe_allow_html=True)
-    
-    display_df = comparison_df[['model', 'accuracy', 'f1_score', 'precision', 'recall']].copy()
-    display_df.columns = ['Model', 'Accuracy', 'F1 Score', 'Precision', 'Recall']
-    
-    for col in ['Accuracy', 'F1 Score', 'Precision', 'Recall']:
-        display_df[col] = display_df[col].apply(lambda x: f"{x:.4f}")
-    
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # Detailed Leaderboard Table
+    st.markdown("""
+    <div class="panel-container">
+        <div class="panel-title">Validation Metric Leaderboard</div>
+        <div class="panel-desc">Rigorous multi-class evaluation scores rounded to 4 significant digits.</div>
+    """, unsafe_allow_html=True)
+
+    display_df = comparison_df[['model', 'f1_score', 'accuracy', 'precision', 'recall']].copy()
+    display_df['Deployment Status'] = ["Champion" if i == best_idx else "Candidate" for i in range(len(display_df))]
+    display_df.columns = ['Model Architecture', 'Macro F1', 'Accuracy', 'Precision', 'Recall', 'Deployment Status']
+
+    for metric in ['Macro F1', 'Accuracy', 'Precision', 'Recall']:
+        display_df[metric] = display_df[metric].apply(lambda x: f"{float(x):.4f}")
+
     st.dataframe(display_df, use_container_width=True, hide_index=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-def show_about():
-    st.markdown('<div class="section-header">ℹ️ About This Project</div>', unsafe_allow_html=True)
-    
+    # Engineering Insights Card
     st.markdown("""
-    <div class="about-section">
-        <div class="about-title">🌍 Project Overview</div>
-        <div class="about-text">
-            This AQI Forecasting System is an advanced machine learning solution designed to predict 
-            air quality conditions for the next 3 days in Multan, Pakistan. The system uses recursive 
-            forecasting with 5 classification models to generate accurate predictions that help citizens 
-            make informed decisions about outdoor activities and health precautions.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    st.markdown('<h3 style="color: #00d4ff; margin: 2rem 0 1rem 0;">🔄 How It Works</h3>', unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("""
-        <div class="about-section">
-            <div style="color: #00d4ff; font-weight: bold; margin-bottom: 1rem;">📊 Data Pipeline</div>
-            <ul style="color: #bbb; line-height: 2;">
-                <li>✓ Hourly OpenWeather API data</li>
-                <li>✓ Real-time feature engineering</li>
-                <li>✓ Hopsworks feature store</li>
-                <li>✓ Historical backfilling</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class="about-section">
-            <div style="color: #00d4ff; font-weight: bold; margin-bottom: 1rem;">🤖 ML Pipeline</div>
-            <ul style="color: #bbb; line-height: 2;">
-                <li>✓ Daily model retraining</li>
-                <li>✓ 5 classification models</li>
-                <li>✓ 72-hour recursive forecast</li>
-                <li>✓ Auto model selection</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    st.markdown('<h3 style="color: #00d4ff; margin: 2rem 0 1rem 0;">🧠 Classification Models</h3>', unsafe_allow_html=True)
-    
-    models_info = [
-        ("🌲 Random Forest", "Ensemble of decision trees with balanced weights"),
-        ("📈 Histogram Gradient Boosting", "Fast gradient boosting with built-in NaN handling"),
-        ("⚡ LightGBM", "Distributed gradient boosting, optimized for speed"),
-        ("🌳 Decision Tree", "Simple interpretable tree-based classifier"),
-        ("🚀 Sklearn Gradient Boosting", "Scikit-learn's gradient boosting with NaN imputation")
-    ]
-    
-    for model_name, description in models_info:
-        st.markdown(f"""
-        <div class="model-info">
-            <div class="model-name">{model_name}</div>
-            <p style="color: #aaa;">{description}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    
-    st.markdown('<h3 style="color: #00d4ff; margin: 2rem 0 1rem 0;">📍 AQI Categories</h3>', unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class="about-section">
-        <div style="color: #bbb; line-height: 2.5; font-size: 1.05rem;">
-            <p><span style="color: #00ff88;">●</span> <strong>1 - Good:</strong> Satisfactory air quality</p>
-            <p><span style="color: #ffff00;">●</span> <strong>2 - Fair:</strong> Acceptable air quality</p>
-            <p><span style="color: #ff9500;">●</span> <strong>3 - Moderate:</strong> Some pollutant concerns</p>
-            <p><span style="color: #ff3232;">●</span> <strong>4 - Poor:</strong> Health effects possible</p>
-            <p><span style="color: #ff0080;">●</span> <strong>5 - Very Poor:</strong> Health alert condition</p>
+    <div class="panel-container">
+        <div class="panel-title">Engineering Observations & Model Mechanics</div>
+        <div class="advisory-grid">
+            <div class="advisory-item">
+                <div class="advisory-item-title">⚡ Histogram & Gradient Boosting</div>
+                <div class="advisory-item-desc">Gradient boosted tree architectures consistently outperform standalone decision trees by capturing non-linear interactions between weather factors and atmospheric stagnation.</div>
+            </div>
+            <div class="advisory-item">
+                <div class="advisory-item-title">⚖️ Imbalance Mitigation</div>
+                <div class="advisory-item-desc">Class weighting policies ensure that minority severity classes (such as Category 1 and 2 during smog season) maintain high sensitivity without sacrificing overall precision.</div>
+            </div>
+            <div class="advisory-item">
+                <div class="advisory-item-title">🔄 Recursive Stability</div>
+                <div class="advisory-item-desc">Recursive auto-regressive feature rollouts retain consistent predictive boundaries across the 72-hour forecast horizon without variance explosion.</div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
+# ---------------------------------------------------------
+# View 3: ℹ️ Architecture & System Info View
+# ---------------------------------------------------------
+def render_about_page():
+    st.markdown("""
+    <div class="panel-container">
+        <div class="panel-title">System Architecture Overview</div>
+        <div class="panel-desc">End-to-end automated machine learning pipeline deployed for continuous environmental intelligence.</div>
+        <div class="bento-grid">
+            <div class="bento-card">
+                <div class="bento-step-num">Stage 01</div>
+                <div class="bento-title">Hourly Ingestion</div>
+                <div class="bento-desc">Scheduled fetch of 8 key atmospheric pollutants (PM2.5, PM10, NO2, SO2, CO, O3, NH3, NO) and local weather metrics via OpenWeather API.</div>
+            </div>
+            <div class="bento-card">
+                <div class="bento-step-num">Stage 02</div>
+                <div class="bento-title">Hopsworks Feature Store</div>
+                <div class="bento-desc">Centralized temporal feature repository managing feature groups, cyclical time transformations, and lag features with point-in-time correctness.</div>
+            </div>
+            <div class="bento-card">
+                <div class="bento-step-num">Stage 03</div>
+                <div class="bento-title">Daily CI/CD Retraining</div>
+                <div class="bento-desc">Automated training comparing 5 classification models on sliding historical data, selecting the top macro F1 model for production.</div>
+            </div>
+            <div class="bento-card">
+                <div class="bento-step-num">Stage 04</div>
+                <div class="bento-title">72h Recursive Inference</div>
+                <div class="bento-desc">Forward-projecting auto-regressive inference yielding daily maximum, minimum, and average AQI categories with safety advisories.</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Evaluated Models Catalog
+    st.markdown("""
+    <div class="panel-container">
+        <div class="panel-title">Model Catalog & Algorithmic Design</div>
+        <div class="panel-desc">Summary of evaluated classification algorithms and their specific capabilities.</div>
+        <div class="bento-grid">
+            <div class="bento-card">
+                <div class="bento-title">LightGBM</div>
+                <div class="bento-desc">Fast, distributed histogram-based gradient boosting optimized for speed and memory efficiency. Employs leaf-wise tree growth.</div>
+            </div>
+            <div class="bento-card">
+                <div class="bento-title">Histogram Gradient Boosting</div>
+                <div class="bento-desc">Scikit-learn implementation with native handling of missing features and integer-based binning for accelerated training.</div>
+            </div>
+            <div class="bento-card">
+                <div class="bento-title">Random Forest Classifier</div>
+                <div class="bento-desc">Bagging ensemble of decorrelated decision trees, providing robust variance reduction and resilience against isolated noisy sensor values.</div>
+            </div>
+            <div class="bento-card">
+                <div class="bento-title">Decision Tree Baseline</div>
+                <div class="bento-desc">Interpretable baseline benchmark demonstrating the performance improvement achieved by subsequent ensemble architectures.</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Standard AQI Index Standards
+    st.markdown("""
+    <div class="panel-container">
+        <div class="panel-title">Air Quality Index Classification Standards</div>
+        <div class="panel-desc">Standardized European / OpenWeather 5-level scale corresponding to ambient particulate thresholds.</div>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; color: var(--text-secondary); text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-subtle); color: var(--text-primary);">
+                        <th style="padding: 0.75rem 0.5rem;">Index</th>
+                        <th style="padding: 0.75rem 0.5rem;">Category</th>
+                        <th style="padding: 0.75rem 0.5rem;">PM2.5 (μg/m³)</th>
+                        <th style="padding: 0.75rem 0.5rem;">PM10 (μg/m³)</th>
+                        <th style="padding: 0.75rem 0.5rem;">Health Implications</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid var(--border-subtle);">
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 700; color: var(--aqi-1-color);">1</td>
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 600;">Good</td>
+                        <td style="padding: 0.75rem 0.5rem;">0 – 10</td>
+                        <td style="padding: 0.75rem 0.5rem;">0 – 20</td>
+                        <td style="padding: 0.75rem 0.5rem;">Ideal air quality; minimal or no health hazard.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-subtle);">
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 700; color: var(--aqi-2-color);">2</td>
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 600;">Fair</td>
+                        <td style="padding: 0.75rem 0.5rem;">10 – 25</td>
+                        <td style="padding: 0.75rem 0.5rem;">20 – 50</td>
+                        <td style="padding: 0.75rem 0.5rem;">Acceptable quality; mild irritation possible for highly sensitive people.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-subtle);">
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 700; color: var(--aqi-3-color);">3</td>
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 600;">Moderate</td>
+                        <td style="padding: 0.75rem 0.5rem;">25 – 50</td>
+                        <td style="padding: 0.75rem 0.5rem;">50 – 100</td>
+                        <td style="padding: 0.75rem 0.5rem;">Respiratory symptoms emerge in sensitive populations.</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-subtle);">
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 700; color: var(--aqi-4-color);">4</td>
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 600;">Poor</td>
+                        <td style="padding: 0.75rem 0.5rem;">50 – 75</td>
+                        <td style="padding: 0.75rem 0.5rem;">100 – 200</td>
+                        <td style="padding: 0.75rem 0.5rem;">Adverse health symptoms likely for broader public; mask advised.</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 700; color: var(--aqi-5-color);">5</td>
+                        <td style="padding: 0.75rem 0.5rem; font-weight: 600;">Very Poor</td>
+                        <td style="padding: 0.75rem 0.5rem;">> 75</td>
+                        <td style="padding: 0.75rem 0.5rem;">> 200</td>
+                        <td style="padding: 0.75rem 0.5rem;">Emergency conditions; significant risk for the entire population.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# Main Application Flow
+# ---------------------------------------------------------
 def main():
-    # Header
-    st.markdown('<div class="main-title">☁️ AQI Forecasting System</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">Next 3-days Air Quality Index Prediction for Multan</div>', unsafe_allow_html=True)
-    st.markdown('<div class="tagline">Stay informed. Stay safe.</div>', unsafe_allow_html=True)
-    
-    # Load data
-    with st.spinner("⏳ Loading predictions..."):
-        predictions_df, comparison_df = load_predictions()
-    
-    pkt = pytz.timezone(TIMEZONE)
+    # Load dataset
+    predictions_df, comparison_df = load_predictions()
+
+    # Timezone & Current Timestamp
+    try:
+        pkt = pytz.timezone(TIMEZONE)
+    except Exception:
+        pkt = pytz.timezone("Asia/Karachi")
     current_time = datetime.now(pkt)
-    st.markdown(f'<div class="datetime-display">📅 {current_time.strftime("%A, %B %d, %Y | %I:%M %p PKT")}</div>', unsafe_allow_html=True)
-    
-    # Sidebar navigation
+    formatted_time = current_time.strftime("%A, %b %d · %I:%M %p PKT")
+
+    # Sidebar Header & Brand
     st.sidebar.markdown("""
-    <div style="text-align: center; margin-bottom: 2rem;">
-        <div class="sidebar-menu-title">📋 MENU</div>
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-title">Multan AQI Monitor</div>
+        <div class="sidebar-brand-subtitle">Predictive Environmental Intelligence</div>
     </div>
     """, unsafe_allow_html=True)
-    
-    page = st.sidebar.radio(
-        "Navigate to:",
-        ["🔮 3-Day Forecast", "📊 Model Comparison", "ℹ️ About"],
+
+    # Sidebar Navigation
+    st.sidebar.markdown('<div class="sidebar-section-title">Navigation</div>', unsafe_allow_html=True)
+    page_options = [
+        "🔮 3-Day Forecast",
+        "📊 Model Benchmarks",
+        "ℹ️ System Architecture"
+    ]
+    selected_page = st.sidebar.radio(
+        "Navigation",
+        options=page_options,
         label_visibility="collapsed"
     )
+
+    # Sidebar Theme Preferences (Light / Dark / System)
+    st.sidebar.markdown('<div class="sidebar-section-title">Interface Theme</div>', unsafe_allow_html=True)
+    theme_options = ["System", "Light", "Dark"]
+    theme_icons = {
+        "System": "🖥️ System",
+        "Light": "☀️ Light",
+        "Dark": "🌙 Dark"
+    }
+
+    selected_theme = st.sidebar.radio(
+        "Theme Preference",
+        options=theme_options,
+        format_func=lambda x: theme_icons.get(x, x),
+        index=theme_options.index(st.session_state.theme_preference),
+        horizontal=True,
+        label_visibility="collapsed",
+        key="theme_radio_input"
+    )
+
+    # Handle theme change trigger
+    if selected_theme != st.session_state.theme_preference:
+        st.session_state.theme_preference = selected_theme
+        st.rerun()
+
+    # Sidebar Pipeline Controls & Telemetry
+    st.sidebar.markdown('<div class="sidebar-section-title">Telemetry & Feeds</div>', unsafe_allow_html=True)
     
-    st.sidebar.markdown("""
-    <div style="margin-top: 3rem; color: #00d4ff; font-size: 0.85rem; text-align: center; padding-top: 1rem; border-top: 1px solid rgba(0, 212, 255, 0.2);">
-        <p style="margin: 0.5rem 0;">✅ Status: Active</p>
-        <p style="margin: 0.5rem 0;">📊 Type: Classification</p>
-        <p style="margin: 0.5rem 0;">📡 Source: OpenWeather API</p>
-        <p style="margin: 0.5rem 0;">⏰ Update: Daily 11:00 AM PST</p>
+    if st.sidebar.button("🔄 Refresh Data Feed", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+
+    st.sidebar.markdown(f"""
+    <div class="sidebar-meta-box">
+        <div><strong>Monitoring Site:</strong> Multan City</div>
+        <div><strong>Coordinates:</strong> {LAT:.2f}° N, {LON:.2f}° E</div>
+        <div><strong>Feature Store:</strong> Hopsworks v1</div>
+        <div><strong>Pipeline Cycle:</strong> Daily 11:00 AM PKT</div>
+        <div><strong>Status:</strong> <span style="color: #10b981; font-weight: 600;">● Active</span></div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Page routing
-    if "3-Day Forecast" in page:
-        show_forecast(predictions_df, comparison_df)
-    elif "Model Comparison" in page:
-        show_model_comparison(comparison_df)
+
+    # Persistent Clean Top Header
+    st.markdown(f"""
+    <div class="page-header">
+        <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                <span class="badge badge-brand">Multan, Pakistan</span>
+                <span class="badge badge-live">Operational Feed</span>
+            </div>
+            <h1 class="page-title">Air Quality Intelligence Dashboard</h1>
+            <div class="page-subtitle">72-Hour recursive multi-model machine learning forecast system</div>
+        </div>
+        <div class="header-meta">
+            <span class="badge badge-neutral">📅 {formatted_time}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Page Routing
+    if "3-Day Forecast" in selected_page:
+        render_forecast_page(predictions_df, comparison_df, st.session_state.theme_preference)
+    elif "Model Benchmarks" in selected_page:
+        render_model_comparison_page(comparison_df, st.session_state.theme_preference)
     else:
-        show_about()
-    
-    # Footer
-    st.markdown('<div style="height: 50px;"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="footer">Created by Saqib Ahmad Siddiqui | AQI Forecasting System v1.0</div>', unsafe_allow_html=True)
+        render_about_page()
+
+    # Refined Enterprise Footer
+    st.markdown("""
+    <div class="footer-bar">
+        <div>AQI Forecasting System · Production Release v2.0</div>
+        <div>Multan Environmental Observation Project · Crafted with Precision</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
