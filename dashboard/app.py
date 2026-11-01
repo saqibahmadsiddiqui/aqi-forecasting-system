@@ -1058,6 +1058,14 @@ def render_model_comparison_page(comparison_df: pd.DataFrame, theme_mode: str):
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
     st.markdown("</div>", unsafe_allow_html=True)
 
+    # Prepare display dataframe for leaderboard
+    display_df = comparison_df[['model', 'f1_score', 'accuracy', 'precision', 'recall']].copy()
+    display_df['Deployment Status'] = ["Champion" if i == best_idx else "Candidate" for i in range(len(display_df))]
+    display_df.columns = ['Model Architecture', 'Macro F1', 'Accuracy', 'Precision', 'Recall', 'Deployment Status']
+
+    for metric in ['Macro F1', 'Accuracy', 'Precision', 'Recall']:
+        display_df[metric] = display_df[metric].apply(lambda x: f"{float(x):.4f}")
+
     table_rows = []
     for _, row in display_df.iterrows():
         is_champ = row['Deployment Status'] == "Champion"
