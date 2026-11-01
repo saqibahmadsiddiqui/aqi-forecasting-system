@@ -153,8 +153,22 @@ def generate_theme_css(theme_mode: str) -> str:
             color: var(--text-primary) !important;
         }}
 
+        /* Eliminate excessive Streamlit bottom gap across all pages */
+        .block-container, [data-testid="stMainBlockContainer"] {{
+            padding-top: 2rem !important;
+            padding-bottom: 1.25rem !important;
+            max-width: 100% !important;
+        }}
+
+        /* Hide default Streamlit footer */
+        footer {{
+            display: none !important;
+            visibility: hidden !important;
+        }}
+
         [data-testid="stHeader"] {{
             background-color: transparent !important;
+            z-index: 1000 !important;
         }}
 
         /* Sidebar Styling */
@@ -165,6 +179,69 @@ def generate_theme_css(theme_mode: str) -> str:
 
         [data-testid="stSidebar"] * {{
             color: var(--text-primary);
+        }}
+
+        /* Sidebar Collapse / Open Toggle Button Visibility in Light & Dark Mode */
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="collapsedControl"],
+        [data-testid="stSidebarHeader"] button,
+        button[kind="header"],
+        button[data-testid="baseButton-header"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"] {{
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: var(--text-primary) !important;
+            background-color: var(--bg-surface-elevated) !important;
+            border: 1px solid var(--border-default) !important;
+            border-radius: 8px !important;
+            box-shadow: var(--shadow-sm) !important;
+            z-index: 999999 !important;
+            transition: all 0.2s ease !important;
+        }}
+
+        [data-testid="stSidebarCollapseButton"] button,
+        [data-testid="collapsedControl"] button {{
+            color: var(--text-primary) !important;
+            background-color: transparent !important;
+            border: none !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }}
+
+        /* Ensure chevron SVG icon inside toggle button is always high contrast */
+        [data-testid="stSidebarCollapseButton"] svg,
+        [data-testid="stSidebarCollapsedControl"] svg,
+        [data-testid="collapsedControl"] svg,
+        [data-testid="stSidebarHeader"] button svg,
+        button[kind="header"] svg,
+        button[data-testid="baseButton-header"] svg {{
+            fill: var(--text-primary) !important;
+            stroke: var(--text-primary) !important;
+            color: var(--text-primary) !important;
+            width: 20px !important;
+            height: 20px !important;
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }}
+
+        /* Hover states for sidebar toggle */
+        [data-testid="stSidebarCollapseButton"]:hover,
+        [data-testid="stSidebarCollapsedControl"]:hover,
+        [data-testid="collapsedControl"]:hover,
+        [data-testid="stSidebarHeader"] button:hover,
+        button[kind="header"]:hover {{
+            background-color: var(--bg-surface-hover) !important;
+            border-color: var(--accent-primary) !important;
+            transform: scale(1.05) !important;
+        }}
+
+        [data-testid="stSidebarCollapseButton"]:hover svg,
+        [data-testid="collapsedControl"]:hover svg {{
+            fill: var(--accent-primary) !important;
+            stroke: var(--accent-primary) !important;
         }}
 
         /* Clean Section Headers */
@@ -513,21 +590,27 @@ def generate_theme_css(theme_mode: str) -> str:
             line-height: 1.6;
         }}
 
-        /* Subtle modern footer */
+        /* Subtle modern footer with tight bottom gap */
         .footer-bar {{
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 1rem;
-            padding: 1.5rem 0 0.5rem 0;
-            margin-top: 3rem;
+            gap: 0.75rem;
+            padding: 0.85rem 0 0.25rem 0;
+            margin-top: 1.25rem;
             border-top: 1px solid var(--border-subtle);
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.78rem;
         }}
 
         /* Override Streamlit Widget Defaults for Professional Look */
+        [data-testid="stSidebar"] [data-testid="stRadio"] label {{
+            font-size: 0.84rem !important;
+            font-weight: 500 !important;
+            cursor: pointer;
+        }}
+
         [data-testid="stRadio"] label {{
             font-size: 0.88rem !important;
             font-weight: 500 !important;
@@ -1147,13 +1230,8 @@ def main():
         st.session_state.theme_preference = selected_theme
         st.rerun()
 
-    # Sidebar Pipeline Controls & Telemetry
-    st.sidebar.markdown('<div class="sidebar-section-title">Telemetry & Feeds</div>', unsafe_allow_html=True)
-    
-    if st.sidebar.button("🔄 Refresh Data Feed", use_container_width=True):
-        st.cache_data.clear()
-        st.rerun()
-
+    # Station Metadata
+    st.sidebar.markdown('<div class="sidebar-section-title">Station Info</div>', unsafe_allow_html=True)
     st.sidebar.markdown(f"""
     <div class="sidebar-meta-box">
         <div><strong>Monitoring Site:</strong> Multan City</div>
