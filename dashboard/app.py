@@ -189,16 +189,12 @@ def generate_theme_css(theme_mode: str) -> str:
             left: 14px !important;
             z-index: 9999999 !important;
             display: block !important;
-            visibility: visible !important;
         }}
 
-        /* Style the actual button for both open and close states across all Streamlit versions */
+        /* Target the actual buttons for both open and close states */
         div[data-testid="collapsedControl"] button,
         div[data-testid="stSidebarCollapsedControl"] button,
-        header[data-testid="stHeader"] button[kind="headerNoPadding"],
-        header[data-testid="stHeader"] button[kind="header"],
-        div[data-testid="stSidebarCollapseButton"] button,
-        button[data-testid="stSidebarCollapseButton"] {{
+        div[data-testid="stSidebarCollapseButton"] button {{
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -207,47 +203,61 @@ def generate_theme_css(theme_mode: str) -> str:
             background-color: var(--bg-surface-elevated) !important;
             border: 2px solid var(--border-default) !important;
             border-radius: 8px !important;
-            padding: 6px 8px !important;
-            min-width: 36px !important;
-            min-height: 36px !important;
+            padding: 6px !important;
+            width: 38px !important;
+            height: 38px !important;
+            min-width: 38px !important;
+            min-height: 38px !important;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25) !important;
             cursor: pointer !important;
             transition: all 0.2s ease !important;
+            position: relative !important;
         }}
 
-        /* Force high contrast on SVGs and icons inside */
-        div[data-testid="collapsedControl"] svg,
+        /* Hide the native fragile SVG inside so it never renders invisible */
         div[data-testid="collapsedControl"] button svg,
-        div[data-testid="stSidebarCollapsedControl"] svg,
         div[data-testid="stSidebarCollapsedControl"] button svg,
-        div[data-testid="stSidebarCollapseButton"] svg,
-        div[data-testid="stSidebarCollapseButton"] button svg,
-        header[data-testid="stHeader"] button svg,
-        button[kind="headerNoPadding"] svg {{
-            fill: var(--text-primary) !important;
-            stroke: var(--text-primary) !important;
-            color: var(--text-primary) !important;
-            width: 20px !important;
-            height: 20px !important;
-            display: inline-block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
+        div[data-testid="stSidebarCollapseButton"] button svg {{
+            display: none !important;
+        }}
+
+        /* Render bulletproof pure SVG chevron using CSS mask filled with var(--text-primary) */
+        div[data-testid="collapsedControl"] button::after,
+        div[data-testid="stSidebarCollapsedControl"] button::after {{
+            content: "";
+            width: 20px;
+            height: 20px;
+            background-color: var(--text-primary) !important;
+            -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='13 17 18 12 13 7'%3E%3C/polyline%3E%3Cpolyline points='6 17 11 12 6 7'%3E%3C/polyline%3E%3C/svg%3E") no-repeat center;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='13 17 18 12 13 7'%3E%3C/polyline%3E%3Cpolyline points='6 17 11 12 6 7'%3E%3C/polyline%3E%3C/svg%3E") no-repeat center;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            display: block;
+        }}
+
+        /* Render close chevron for open sidebar */
+        div[data-testid="stSidebarCollapseButton"] button::after {{
+            content: "";
+            width: 20px;
+            height: 20px;
+            background-color: var(--text-primary) !important;
+            -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='11 17 6 12 11 7'%3E%3C/polyline%3E%3Cpolyline points='18 17 13 12 18 7'%3E%3C/polyline%3E%3C/svg%3E") no-repeat center;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='11 17 6 12 11 7'%3E%3C/polyline%3E%3Cpolyline points='18 17 13 12 18 7'%3E%3C/polyline%3E%3C/svg%3E") no-repeat center;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            display: block;
         }}
 
         div[data-testid="collapsedControl"] button:hover,
-        div[data-testid="stSidebarCollapseButton"] button:hover,
-        header[data-testid="stHeader"] button[kind="headerNoPadding"]:hover {{
+        div[data-testid="stSidebarCollapseButton"] button:hover {{
             background-color: var(--bg-surface-hover) !important;
             border-color: var(--accent-primary) !important;
             box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35) !important;
         }}
 
-        div[data-testid="collapsedControl"] button:hover svg,
-        div[data-testid="stSidebarCollapseButton"] button:hover svg,
-        header[data-testid="stHeader"] button[kind="headerNoPadding"]:hover svg {{
-            fill: var(--accent-primary) !important;
-            stroke: var(--accent-primary) !important;
-            color: var(--accent-primary) !important;
+        div[data-testid="collapsedControl"] button:hover::after,
+        div[data-testid="stSidebarCollapseButton"] button:hover::after {{
+            background-color: var(--accent-primary) !important;
         }}
 
         /* Clean Section Headers */
@@ -1048,20 +1058,6 @@ def render_model_comparison_page(comparison_df: pd.DataFrame, theme_mode: str):
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Detailed Leaderboard Table
-    st.markdown("""
-    <div class="panel-container">
-        <div class="panel-title">Validation Metric Leaderboard</div>
-        <div class="panel-desc">Rigorous multi-class evaluation scores rounded to 4 significant digits.</div>
-    """, unsafe_allow_html=True)
-
-    display_df = comparison_df[['model', 'f1_score', 'accuracy', 'precision', 'recall']].copy()
-    display_df['Deployment Status'] = ["Champion" if i == best_idx else "Candidate" for i in range(len(display_df))]
-    display_df.columns = ['Model Architecture', 'Macro F1', 'Accuracy', 'Precision', 'Recall', 'Deployment Status']
-
-    for metric in ['Macro F1', 'Accuracy', 'Precision', 'Recall']:
-        display_df[metric] = display_df[metric].apply(lambda x: f"{float(x):.4f}")
-
     table_rows = []
     for _, row in display_df.iterrows():
         is_champ = row['Deployment Status'] == "Champion"
@@ -1073,38 +1069,40 @@ def render_model_comparison_page(comparison_df: pd.DataFrame, theme_mode: str):
         row_bg = "background-color: var(--bg-surface-elevated);" if is_champ else ""
         row_weight = "font-weight: 700;" if is_champ else "font-weight: 500;"
 
-        table_rows.append(f"""
-            <tr style="border-bottom: 1px solid var(--border-subtle); {row_bg}">
-                <td style="padding: 0.85rem 1rem; {row_weight} color: var(--text-primary);">{row['Model Architecture']}</td>
-                <td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row['Macro F1']}</td>
-                <td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row['Accuracy']}</td>
-                <td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row['Precision']}</td>
-                <td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row['Recall']}</td>
-                <td style="padding: 0.85rem 1rem;">{status_badge}</td>
-            </tr>
-        """)
+        table_rows.append(
+            f'<tr style="border-bottom: 1px solid var(--border-subtle); {row_bg}">'
+            f'<td style="padding: 0.85rem 1rem; {row_weight} color: var(--text-primary);">{row["Model Architecture"]}</td>'
+            f'<td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row["Macro F1"]}</td>'
+            f'<td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row["Accuracy"]}</td>'
+            f'<td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row["Precision"]}</td>'
+            f'<td style="padding: 0.85rem 1rem; color: var(--text-primary); font-family: monospace; font-size: 0.9rem;">{row["Recall"]}</td>'
+            f'<td style="padding: 0.85rem 1rem;">{status_badge}</td>'
+            f'</tr>'
+        )
 
-    table_html = f"""
-    <div style="overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: 10px; background-color: var(--bg-surface);">
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.86rem; text-align: left;">
-            <thead>
-                <tr style="border-bottom: 2px solid var(--border-subtle); background-color: var(--bg-surface-elevated); color: var(--text-primary);">
-                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Model Architecture</th>
-                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Macro F1</th>
-                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Accuracy</th>
-                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Precision</th>
-                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Recall</th>
-                    <th style="padding: 0.85rem 1rem; font-weight: 700;">Deployment Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {''.join(table_rows)}
-            </tbody>
-        </table>
-    </div>
-    """
-    st.markdown(table_html, unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    rows_html = "".join(table_rows)
+    table_panel = (
+        '<div class="panel-container">'
+        '<div class="panel-title">Validation Metric Leaderboard</div>'
+        '<div class="panel-desc">Rigorous multi-class evaluation scores rounded to 4 significant digits.</div>'
+        '<div style="overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: 10px; background-color: var(--bg-surface); margin-top: 1rem;">'
+        '<table style="width: 100%; border-collapse: collapse; font-size: 0.86rem; text-align: left;">'
+        '<thead>'
+        '<tr style="border-bottom: 2px solid var(--border-subtle); background-color: var(--bg-surface-elevated); color: var(--text-primary);">'
+        '<th style="padding: 0.85rem 1rem; font-weight: 700;">Model Architecture</th>'
+        '<th style="padding: 0.85rem 1rem; font-weight: 700;">Macro F1</th>'
+        '<th style="padding: 0.85rem 1rem; font-weight: 700;">Accuracy</th>'
+        '<th style="padding: 0.85rem 1rem; font-weight: 700;">Precision</th>'
+        '<th style="padding: 0.85rem 1rem; font-weight: 700;">Recall</th>'
+        '<th style="padding: 0.85rem 1rem; font-weight: 700;">Deployment Status</th>'
+        '</tr>'
+        '</thead>'
+        f'<tbody>{rows_html}</tbody>'
+        '</table>'
+        '</div>'
+        '</div>'
+    )
+    st.markdown(table_panel, unsafe_allow_html=True)
 
     # Engineering Insights Card
     st.markdown("""
