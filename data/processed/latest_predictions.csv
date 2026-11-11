@@ -1,4 +1,4 @@
 date,day_name,average_aqi,min_aqi,max_aqi,category,warning,timestamp
-2026-11-11,Wednesday,4,4,5,Poor,"POOR! Limit outdoor exposure, especially for sensitive groups.",2026-11-10 07:02:36
-2026-11-12,Thursday,4,4,5,Poor,"POOR! Limit outdoor exposure, especially for sensitive groups.",2026-11-10 07:02:36
-2026-11-13,Friday,4,4,5,Poor,"POOR! Limit outdoor exposure, especially for sensitive groups.",2026-11-10 07:02:36
+2026-11-12,Thursday,5,5,5,Very Poor,HAZARDOUS! Avoid all outdoor exertion.,2026-11-11 05:55:17
+2026-11-13,Friday,5,5,5,Very Poor,HAZARDOUS! Avoid all outdoor exertion.,2026-11-11 05:55:17
+2026-11-14,Saturday,5,5,5,Very Poor,HAZARDOUS! Avoid all outdoor exertion.,2026-11-11 05:55:17
